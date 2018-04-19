@@ -1,0 +1,14 @@
+94c25ab456826fcb7b77d6368e703d5e *DESCRIPTION
+9654a8cc2b501698fc28e997691deb51 *NAMESPACE
+759ba8b25e6479131649bb9ff7d58c39 *R/lspartition-package.R
+60b25c32f7ecf907d3e145a774150de8 *R/lspfunctions.R
+a0f70676a511587a25d80c3e76963af8 *R/lspkselect.R
+29096082a969f5ffd54147ffa4238a57 *R/lsplincom.R
+e819cb76fc75a94f50e17c181ba76e90 *R/lsprobust.R
+8ad1391852725c6c406684b9a8c101f6 *R/lsprobust.plot.R
+4c3c68604a9cce356ef062c1cd980266 *R/sysdata.rda
+035ea2ad46a077d63c8db1191043d13e *man/lspartition-package.Rd
+17d4690b16432efd1f1e64ef8699cd8c *man/lspkselect.Rd
+b61c4eb9d1cd99a59e0b455d33ce2637 *man/lsplincom.Rd
+5782c22562ac6efe9cf5ec2ccf0aac77 *man/lsprobust.Rd
+1fd4c0741f8f37970dfe0d1a50090dfa *man/lsprobust.plot.Rd
