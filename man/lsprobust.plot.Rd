@@ -16,9 +16,9 @@ lsprobust.plot(..., alpha = NULL, type = NULL, CS = "ci", CStype = NULL,
 confidence regions. If more than one is provided, they will be applied
 to data series accordingly.}
 
-\item{type}{String, one of \code{"line"} (default), \code{"points"} or \code{"both"}, how
-the point estimates are plotted. If more than one is provided, they will be
-applied to data series accordingly.}
+\item{type}{String, one of \code{"line"} (default), \code{"points"}, \code{"binscatter"},
+\code{"none"} or \code{"both"}, how the point estimates are plotted. If more
+than one is provided, they will be applied to data series accordingly.}
 
 \item{CS}{String, type of confidence sets. Options are \code{"ci"} for pointwise confidence
 intervals, \code{"cb"} for uniform confidence bands, and \code{"all"} for both.}
@@ -86,7 +86,7 @@ A standard \code{\link{ggplot2}} object is returned, hence can be used for furth
        customization.
 }
 \description{
-\code{lsprobust.plot} plots estimated regression functions and confidence regions using the \pkg{lspartition} package. 
+\code{lsprobust.plot} plots estimated regression functions and confidence regions using the \pkg{lspartition} package.
             See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018a)} for more technical details and further references.
 
             Companion command: \code{\link{lsprobust}} for partitioning-based least squares regression

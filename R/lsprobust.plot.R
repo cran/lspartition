@@ -1,6 +1,6 @@
 #'Graphic Presentation of Results for \pkg{lspartition} Package
 #'
-#'@description \code{lsprobust.plot} plots estimated regression functions and confidence regions using the \pkg{lspartition} package. 
+#'@description \code{lsprobust.plot} plots estimated regression functions and confidence regions using the \pkg{lspartition} package.
 #'             See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018a)} for more technical details and further references.
 #'
 #'             Companion command: \code{\link{lsprobust}} for partitioning-based least squares regression
@@ -15,9 +15,9 @@
 #'@param alpha Numeric scalar between 0 and 1, the significance level for plotting
 #'             confidence regions. If more than one is provided, they will be applied
 #'             to data series accordingly.
-#'@param type String, one of \code{"line"} (default), \code{"points"} or \code{"both"}, how
-#'            the point estimates are plotted. If more than one is provided, they will be
-#'            applied to data series accordingly.
+#'@param type String, one of \code{"line"} (default), \code{"points"}, \code{"binscatter"},
+#'            \code{"none"} or \code{"both"}, how the point estimates are plotted. If more
+#'            than one is provided, they will be applied to data series accordingly.
 #'@param CS String, type of confidence sets. Options are \code{"ci"} for pointwise confidence
 #'          intervals, \code{"cb"} for uniform confidence bands, and \code{"all"} for both.
 #'@param CStype String, one of \code{"region"} (shaded region, default), \code{"line"}
@@ -123,7 +123,7 @@ lsprobust.plot <- function(..., alpha=NULL, type=NULL, CS="ci", CStype=NULL,
   if (length(type) == 0) {
     type <- rep("line", nfig)
   } else {
-    if (!all(type%in%c("line", "points", "both"))) {
+    if (!all(type%in%c("line", "points", "both", "none", "binscatter"))) {
        stop("Plotting type incorrectly specified.\n")
     }
     type <- rep(type, length.out=nfig)
@@ -213,7 +213,7 @@ lsprobust.plot <- function(..., alpha=NULL, type=NULL, CS="ci", CStype=NULL,
   ########################################
   temp_plot <- ggplot() + theme_bw() #+ theme(legend.position="none")
 
-  CI_l <- CI_r <- CB_l <- CB_r <- tau.cl <- eval <- Sname <- NULL
+  CI_l <- CI_r <- CB_l <- CB_r <- tau.cl <- eval <- Sname <- mid <- tau <- NULL
 
   ########################################
   # looping over input models
@@ -230,16 +230,44 @@ lsprobust.plot <- function(..., alpha=NULL, type=NULL, CS="ci", CStype=NULL,
     }
     if (CS != "ci") {
       c_val <- x[[i]]$sup.cval
+      if (is.na(c_val)) stop("critical value not available.\n")
       data_x$CB_l <- data_x$tau.bc - c_val * data_x$se.rb
       data_x$CB_r <- data_x$tau.bc + c_val * data_x$se.rb
+    }
+
+    ## disconnect pieces and prepare binscatter data
+    method <- x[[i]]$opt$method
+    if (method == "Piecewise Polynomial") {
+      knot <- x[[i]]$knot[[1]][2:(length(x[[i]]$knot[[1]])-1)]
+      data_x <- data_x[order(data_x$eval),]
+      left.index <- sapply(knot, function(z) sum(data_x$eval < z))
+      left.index <- left.index[left.index > 0 & left.index < nrow(data_x)]
+      if (length(left.index) > 0) {
+        left.eval <- (data_x$eval[left.index] + data_x$eval[left.index+1]) / 2
+        add.na <- cbind(left.eval, matrix(NA, length(left.eval), ncol(data_x)-1))
+        colnames(add.na) <- names(data_x)
+        data_x <- rbind(data_x, add.na)
+      }
+      if (type[i] == "binscatter") {
+        if (x[[i]]$opt$m != 1) stop("basis order incorrectly specified.\n")
+        knot <- x[[i]]$knot[[1]]
+        if (length(knot)-1 != length(left.index)+1) stop("evaluation points insufficient.\n")
+        bins <- data.frame(mid = (knot[-length(knot)] + knot[-1]) / 2,
+                           tau = c(data_x$tau.cl[left.index],
+                                   data_x$tau.cl[left.index[length(left.index)]+1]))
+      }
+    } else {
+      if (type[i] == "binscatter") stop("type mismatch.\n")
     }
 
     # changes made by Xinwei
     if (legend_default) {
       data_x$Sname <- paste("Series", i, sep=" ")
       legendGroups <- c(legendGroups, data_x$Sname)
+      if (type[i] == "binscatter") bins$Sname <- paste("Series", i, sep=" ")
     } else {
       data_x$Sname <- legendGroups[i]
+      if (type[i] == "binscatter") bins$Sname <- legendGroups[i]
     }
 
     ########################################
@@ -274,12 +302,13 @@ lsprobust.plot <- function(..., alpha=NULL, type=NULL, CS="ci", CStype=NULL,
     ########################################
     # add error bars to the plot
     if (CStype[i]%in%c("ebar", "all"))
-      temp_plot <- temp_plot + geom_errorbar(data=data_x, aes(x=eval, ymin=CI_l, ymax=CI_r),
+      temp_plot <- temp_plot + geom_errorbar(data=data_x[complete.cases(data_x[c("eval", "CI_l", "CI_r")]),],
+                                             aes(x=eval, ymin=CI_l, ymax=CI_r),
                                              alpha=CSshade[i], col=CScol[i], linetype=1)
 
     ########################################
     # add lines to the plot
-    if (type[i]%in%c("line", "both")) {
+    if (type[i]%in%c("line", "both", "binscatter")) {
       temp_plot <- temp_plot + geom_line(data=data_x, aes(x=eval, y=tau.cl, colour=Sname,
                                                           linetype=Sname), size=lwd[i])
     }
@@ -287,21 +316,31 @@ lsprobust.plot <- function(..., alpha=NULL, type=NULL, CS="ci", CStype=NULL,
     ########################################
     # add points to the plot
     if (type[i]%in%c("points", "both")) {
-      temp_plot <- temp_plot + geom_point(data=data_x, aes(x=eval, y=tau.cl, colour=Sname, shape=Sname), size=pwd[i])
+      temp_plot <- temp_plot + geom_point(data=data_x[complete.cases(data_x[c("eval", "tau.cl")]),],
+                                          aes(x=eval, y=tau.cl, colour=Sname, shape=Sname), size=pwd[i])
     }
 
+    if (type[i] == "binscatter") {
+      temp_plot <- temp_plot + geom_point(data=bins, aes(x=mid, y=tau, colour=Sname, shape=Sname), size=pwd[i])
+    }
+
+    #######################################
     if (type[i] == "line") {
       col_all <- c(col_all, lcol[i])
       lty_all <- c(lty_all, lty[i])
       pty_all <- c(pty_all, NA)
-    } else if (type[i] == "both") {
+    } else if (type[i] == "both" | type[i] == "binscatter") {
       col_all <- c(col_all, lcol[i])
       lty_all <- c(lty_all, lty[i])
       pty_all <- c(pty_all, pty[i])
-    } else {
+    } else if (type[i] == "points") {
       col_all <- c(col_all, pcol[i])
       lty_all <- c(lty_all, NA)
       pty_all <- c(pty_all, pty[i])
+    } else {
+      col_all <- c(col_all, NA)
+      lty_all <- c(lty_all, NA)
+      pty_all <- c(pty_all, NA)
     }
   }
 
@@ -309,13 +348,15 @@ lsprobust.plot <- function(..., alpha=NULL, type=NULL, CS="ci", CStype=NULL,
   # change color, line type and point shape back, and customize legend
   ########################################
 
-  index <- sort.int(legendGroups, index.return=TRUE)$ix
-  temp_plot <- temp_plot + scale_color_manual(values = col_all[index]) +
-               scale_linetype_manual(values = lty_all[index]) +
-               scale_shape_manual(values = pty_all[index]) +
-               guides(colour=guide_legend(title=legendTitle)) +
-               guides(linetype=guide_legend(title=legendTitle)) +
-               guides(shape=guide_legend(title=legendTitle))
+  if (all(type%in%c("line", "points", "both", "binscatter"))) {
+    index <- sort.int(legendGroups, index.return=TRUE)$ix
+    temp_plot <- temp_plot + scale_color_manual(values = col_all[index]) +
+                 scale_linetype_manual(values = lty_all[index]) +
+                 scale_shape_manual(values = pty_all[index]) +
+                 guides(colour=guide_legend(title=legendTitle)) +
+                 guides(linetype=guide_legend(title=legendTitle)) +
+                 guides(shape=guide_legend(title=legendTitle))
+  }
 
   ########################################
   # add title, x and y labs

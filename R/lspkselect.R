@@ -18,7 +18,7 @@
 #'             length as \code{ncol(x)}. Default is \code{deriv=c(0,...,0)}.
 #'@param method Type of basis used for expansion. Options are \code{"bs"} for B-splines,
 #'              \code{"wav"} for compact-supported wavelets (Cohen, Daubechies and Vial, 1993),
-#'              and \code{"pp"} for piecewise polynomials. Default is \code{method = "bs"}.
+#'              and \code{"pp"} for piecewise polynomials. Default is \code{method="bs"}.
 #'@param bc Bias correction method. Options are \code{"bc1"} for higher-order bias correction,
 #'          \code{"bc2"} for least squares bias correction, and \code{"bc3"} for plug-in bias correction.
 #'          Default are \code{"bc3"} for splines and local polynomial partition series and \code{"bc2"}
@@ -26,11 +26,11 @@
 #'@param ktype Knot placement. Options are \code{"uni"} for evenly spaced knots over the
 #'             support of \code{x} and \code{"qua"} for quantile-spaced knots. Default is \code{ktype="uni"}.
 #'@param kselect Method for selecting the number of inner knots used by \code{lspkselect}. Options
-#'               are \code{"imse-rot"} for ROT implementation of IMSE-optimal number of knots and
+#'               are \code{"imse-rot"} for ROT implementation of IMSE-optimal number of knots,
 #'               \code{"imse-dpi"} for second generation of DPI implementation of IMSE-optimal number
-#'               of knots. Default is \code{kselect = "imse-dpi"}.
-#'@param proj If true, projection of smoothing bias leading error onto the lower-order approximating space
-#'            is included for bias correction (splines and piecewise polynomial only). The default is \code{proj = TRUE}.
+#'               of knots, and \code{"all"} for both. Default is \code{kselect="imse-dpi"}.
+#'@param proj If true, projection of leading approximation error onto the lower-order approximating space
+#'            is included for bias correction (splines and piecewise polynomial only). Default is \code{proj=TRUE}.
 #'@param vce Procedure to compute the variance-covariance matrix estimator. Options are
 #'           \itemize{
 #'           \item \code{"hc0"} heteroskedasticity-robust plug-in residuals variance estimator
@@ -77,9 +77,9 @@
 #'
 #'@export
 #'
-#version 0.1 Apr2018
+#version 0.2 Nov2018
 lspkselect = function(y, x, m=NULL, m.bc=NULL, deriv=NULL, method="bs", ktype="uni",
-                     kselect="imse-dpi", proj = TRUE, bc="bc3", vce="hc2", subset=NULL) {
+                      kselect="imse-dpi", proj = TRUE, bc="bc3", vce="hc2", subset=NULL) {
 
   if (!is.null(m)) m <- m - 1
   q <- m.bc
@@ -105,11 +105,11 @@ lspkselect = function(y, x, m=NULL, m.bc=NULL, deriv=NULL, method="bs", ktype="u
 
   method.type <- "B-spline"
   if (method == "localpoly" | method == "pp") method.type <- "Piecewise Polynomial"
-  if (method == "wavelet" | method == "wav") method.type <- "Wavelet"
+  if (method == "wavelet" | method == "wav")  method.type <- "Wavelet"
 
   knot.type <- ""
-  if (ktype == "uniform" | ktype =="uni")  knot.type <- "Uniform"
-  if (ktype == "quantile" | ktype =="qua") knot.type <- "Quantile"
+  if (ktype == "uniform" | ktype =="uni")    knot.type <- "Uniform"
+  if (ktype == "quantile" | ktype =="qua")   knot.type <- "Quantile"
   if (method == "wav" | method == "wavelet") knot.type <- "Uniform"
   #############################################
   #############################################
@@ -130,7 +130,7 @@ lspkselect = function(y, x, m=NULL, m.bc=NULL, deriv=NULL, method="bs", ktype="u
      if (is.null(q))        q <- m + 1
   } else if (method == "wav") {
      if (is.null(m)) m <- max(deriv) + 1
-     q <- m + 1
+     # q <- m + 1
      if (bc == "bc3") bc <- "bc2"
   }
 

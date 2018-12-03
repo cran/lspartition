@@ -1,71 +1,75 @@
-#Uniform knot list
+# Uniform knot list (including xmin and xmax as boundaries)
 genKnot.u <- function(x.min, x.max, d, n) {
   knot <- list()
   for (j in 1:d) {
-    if (n[j] == 0) knot[[j]] <- NULL
-    else           knot[[j]] <- seq(x.min[j], x.max[j], length.out = n[j]+2)[2 : (n[j]+1)]
+    knot[[j]] <- seq(x.min[j], x.max[j], length.out = n[j]+2)
   }
-  knot[d+1] <- "NULL"
   return(knot)
 }
 
-#Quantile knot list
+# Quantile knot list (including xmin and xmax as boundaries)
 genKnot.q <- function(x, d, n) {
   knot <- list()
   for (j in 1:d) {
-    if (n[j] == 0) knot[[j]] <- NULL
-    else           knot[[j]] <- quantile(x[,j], seq(0, 1, 1/(n[j]+1)))[2: (n[j]+1)]
+    knot[[j]] <- quantile(x[,j], seq(0, 1, 1/(n[j]+1)), names = F)
   }
-  knot[d+1] <- "NULL"
   return(knot)
 }
 
-#Generate index set
+# Generate index set
 genIndex <- function(m, d, method) {
   if (method == "bs" | method=="wav") index.m <- diag(m+1, d)
-  if (method == "pp")                index.m <- t(xsimplex(d, m+1))
+  if (method == "pp")                 index.m <- t(xsimplex(d, m+1))
   return(index.m)
 }
 
-#Locate the closest knots to the left of evaluating points and the length of interval
-pos.x <- function(eval, x, knot) {
-  d <- ncol(x); tx <- c(); hx <- c()
-  for (j in 1:d) {
-    knot[[j]] <- c(min(x[,j]), knot[[j]], max(x[,j]))
-    ind <- sum(knot[[j]] <= eval[j])
-    if (ind == length(knot[[j]])) ind <- ind - 1
-    tx  <- c(tx, knot[[j]][ind])
-    hx  <- c(hx, knot[[j]][ind+1] - knot[[j]][ind])
-  }
-  return(list(tx = tx, hx = hx))
+# Locate the closest knots to the left of evaluating points and interval length
+locate.j <- function(eval.j, knot.j) {
+  sorted <- sort.int(eval.j, index.return = T)
+  tmp    <- knot.j[-length(knot.j)][knot.j[-length(knot.j)] <= max(eval.j)]
+  count  <- sapply(tmp, function(z) which.max(sorted$x >= z))
+  count  <- c(diff(count), length(eval.j)-count[length(count)]+1)
+  tx     <- rep(tmp, count)
+  hx     <- rep(diff(c(tmp, knot.j[length(tmp)+1])), count)
+  tx     <- tx[order(sorted$ix)]
+  hx     <- hx[order(sorted$ix)]
+  return(list(tx=tx, hx=hx))
 }
 
-#slightly change pos.x, for locpoly only, output length only, 0.1 is arbitrary
-locate.h <- function(coord, d, x.min, x.max, knot) {
-  hx <- c(); ehx <- c()
-  for (j in 1:d) {
-    knot[[j]] <- c(x.min[j], knot[[j]], x.max[j])
-    ind <- sum(knot[[j]] <= coord[j])
-    hx  <- c(hx, knot[[j]][ind+1] - knot[[j]][ind])
-    if (ind == length(knot[[j]]) - 1) {
-      ehx <- c(ehx, knot[[j]][ind+1]+0.1 - knot[[j]][ind])
-    } else {
-      ehx <- c(ehx, knot[[j]][ind+1] - knot[[j]][ind])
-    }
-  }
-  return(list(hx = hx, ehx = ehx))
+locate.x <- function(eval, d, knot) {
+  raw <- sapply(1:d, function(j) unlist(locate.j(eval[,j], knot[[j]]), use.names = F))
+  tx  <- raw[1:nrow(eval),, drop=F]
+  hx  <- raw[-(1:nrow(eval)),, drop=F]
+  return(list(tx=tx, hx=hx))
 }
 
-#check n of eval
-gen.eN <- function(R, x, d) {
-  eN <- sum(colAlls(rbind(apply(x, 1, ">=", R[1:d]), apply(x, 1, "<=", R[(d+1):(2*d)]))))
+#Check n of eval
+duplicates.drop <- function(data, names) {
+  data <- dplyr::distinct(data, names, .keep_all = T)
+  return(data)
+}
+
+gen.eN <- function(eval, x, d, knot) {
+  neval <- nrow(eval)
+  range <- locate.x(eval, d, knot)
+  range <- cbind(1:neval, range$tx, range$tx+range$hx)
+  range <- as.data.frame(cbind(1:neval, range[do.call(order, as.list(as.data.frame(range[,2:(d+1), drop=F]))),]))
+  #range <- c(list(range), lapply(as.list(names(range[,3:(d+2)])), as.name), list(.keep_all=T))
+  #uniq  <- do.call(distinct, range)
+  uniq <- duplicates.drop(range, lapply(as.list(names(range[,3:(d+2)])), as.name))
+  count <- c(diff(uniq[,1]),  neval-uniq[nrow(uniq), 1]+1)
+  eN.1 <- apply(uniq[, 3:(d+2), drop=F], 1, function(z) rowSums(sweep(x, 2, z) >= 0))
+  eN.2 <- apply(uniq[, -(1:(d+2)), drop=F], 1, function(z) rowSums(sweep(x, 2, z) <= 0))
+  eN   <- colSums(eN.1 + eN.2 == 2*d)
+  eN   <- rep(eN, count)[order(range[,2])]
   return(eN)
 }
 
-#Daubechies scaling function
-dbDesign <- function(eval, x, m, J) {
+# Daubechies scaling function
+dbDesign <- function(eval, knot, m, J) {
   m <- m+1
-  x.max <- max(x); x.min <- min(x); n <- length(eval); k <- 2^J; h <- (x.max - x.min)/ k;
+  x.max <- knot[length(knot)]; x.min <- knot[1]
+  n <- length(eval); k <- 2^J; h <- (x.max - x.min)/ k;
   ext.knot <- c(rep(x.min, m), seq(from = x.min + h, by = h, length.out = 2^J-2*m),
                 rep(x.max-(2*m-1)*h, m))
   ext.knot <- matrix(ext.knot, nrow = n, ncol = k, byrow = TRUE)
@@ -80,222 +84,165 @@ dbDesign <- function(eval, x, m, J) {
   return(P)
 }
 
-#generate marginal design
-design.margin <- function(eval, x, method, m, J, smooth, knot, deriv) {
+# Marginal design for bs and wav
+design.margin <- function(eval, method, m, J, smooth, knot, deriv) {
    if (method == "bs") {
-      ext.knot <- c(rep(min(x), m+1), rep(knot, each = m-smooth), rep(max(x), m+1))
+      if (length(knot)-1>=2) {
+        ext.knot <- c(rep(knot[1], m+1), rep(knot[2:(length(knot)-1)], each = m-smooth), rep(knot[length(knot)], m+1))
+      } else {
+        ext.knot <- c(rep(knot[1], m+1), rep(knot[length(knot)], m+1))
+      }
       P <- splineDesign(knots = ext.knot, eval, ord = m+1, derivs = rep(deriv, length(eval)))
    } else if (method == "wav") {
-      P <- dbDesign(eval, x, m, J)
+      P <- dbDesign(eval, knot, m, J)
    }
    return(P)
 }
 
-#calculate power series matrix
-genPower <- function(A, k) {
-  B <- rowProds(sweep(A, 2, k, FUN="^"))
-  return(B)
+# Calculate power series matrix
+genPower <- function(x, d, k) {
+  P <- 1
+  for (j in 1:d) {
+    P <- P * outer(x[,j], k[j,], "^")
+  }
+  return(P)
 }
 
-
-#modify poly function
+# Modified poly function
 gpoly <- function(eval, m, deriv) {
-  if (nrow(eval) == 1) {
-    P.level <- t(as.matrix(poly(rbind(eval, eval), degree = m, raw = T, simple = T)[1,]))
-  } else {
-    P.level <- poly(eval, degree = m, raw = T, simple = T)
-  }
-  if (!all(deriv == rep(0, ncol(eval)))) {
-    d       <- ncol(eval)
-    name    <- colnames(P.level)
-    de      <- as.matrix(sapply(name, function(x) as.numeric(unlist(strsplit(x, "[.]")))))
-    if (d == 1) de <- t(de)
-    de.low  <- sweep(de, 1, deriv)
-    de.low[de.low < 0] <- NA
-    index              <- which(is.na(colSums(de.low)))
-    P.level[,index]    <- 0
-    if (length(index) != ncol(P.level)) {
-      if (length(index) == 0) {
-        index <- 1:ncol(P.level)
-      } else {
-        index <- (1:ncol(P.level))[-index]
-      }
-      power     <- as.matrix(de[,index])
-      power.low <- as.matrix(de.low[,index])
-      if (d == 1) {
-        power     <- t(power)
-        power.low <- t(power.low)
-      }
-      P.level[,index]  <- apply(power.low, 2, function(z) genPower(eval, z))
-      P.deriv <- as.matrix(P.level[,index])
-      if (nrow(eval) == 1) P.deriv <- t(P.deriv)
-      P.level[,index]  <- sweep(P.deriv, 2,
-                                colProds(factorial(power)/factorial(power.low)),
-                                FUN = "*")
+  if (m >= 1) {
+    if (nrow(eval) == 1) {
+      P.level <- poly(rbind(eval, eval), degree = m, raw = T, simple = T)[1,, drop=F]
+    } else {
+      P.level <- poly(eval, degree = m, raw = T, simple = T)
     }
-    P.level <- cbind(rep(0, nrow(eval)), P.level)
-  } else P.level <- cbind(rep(1, nrow(eval)), P.level)
+    if (!all(deriv == rep(0, ncol(eval)))) {
+      d       <- ncol(eval)
+      name    <- colnames(P.level)
+      de      <- as.matrix(sapply(name, function(x) as.numeric(unlist(strsplit(x, "[.]")))))
+      if (d == 1) de <- t(de)
+      de.low  <- sweep(de, 1, deriv)
+      index <- which(colSums(de.low < 0) > 0)
+      P.level[,index]    <- 0
+      if (length(index) != ncol(P.level)) {
+        if (length(index) == 0) {
+          index <- 1:ncol(P.level)
+        } else {
+          index <- (1:ncol(P.level))[-index]
+        }
+        power     <- de[,index, drop=F]
+        power.low <- de.low[,index, drop=F]
+        P.level[,index] <- genPower(eval, d, power.low)
+        P.level[,index] <- sweep(P.level[,index, drop=F], 2,
+                                 colProds(factorial(power)/factorial(power.low)),
+                                 FUN = "*")
+      }
+      P.level <- cbind(rep(0, nrow(eval)), P.level)
+    } else {
+      P.level <- cbind(rep(1, nrow(eval)), P.level)
+    }
+  } else if (m == 0) {
+    P.level <- as.matrix(rep(1, nrow(eval)))
+  }
   return(P.level)
 }
 
-#computation function used in locpoly
-compute.locpoly <- function(coord, eval, d, d.loc, x.min, x.max, knot, m, deriv) {
+# Computation function used in locpoly
+compute.locpoly <- function(eval, coord.tx, coord.hx, coord.ehx, d.loc, m, deriv) {
   P <- matrix(0, nrow(eval), d.loc)
-  mesh <- locate.h(coord, d, x.min, x.max, knot)
-  index <- x.input <- sweep(eval, 2, coord)
-  x.input <- sweep(x.input, 2, mesh$hx, FUN = "/")
-  index   <- sweep(index, 2, mesh$ehx, FUN = "/")
-  index[index < 0 | index >= 1] <- NA
-  index   <- which(!is.na(rowSums(index)))
+  index <- scale(eval, center=coord.tx, scale=coord.ehx)
+  index <- which(rowSums((index>=0) + (index<1)) == 2*ncol(eval))
+  eval  <- scale(eval, center=coord.tx, scale=coord.hx)
   if (length(index) != 0) {
-    P[index, ] <- gpoly(matrix(x.input[index,], length(index), d), m, deriv) / prod(mesh$hx^deriv)
+    P[index, ] <- gpoly(eval[index,, drop=F], m, deriv) / prod(coord.hx^deriv)
   }
   return(P)
 }
 
-#partitioned polynomial basis
-locpoly <- function(eval, x, m, knot, deriv) {
-  d   <- ncol(eval); x.max <- colMaxs(x); x.min <- colMins(x)
-  seq <- list()
-  for (j in 1:d) seq[[j]] <- c(min(x[,j]), knot[[j]])
-  coord <- as.matrix(expand.grid(seq))
+# Partitioned polynomial basis
+locpoly <- function(eval, m, knot, deriv) {
+  d   <- ncol(eval)
+  coord.tx  <- as.matrix(expand.grid(lapply(knot, function(s) s[-length(s)])))
+  coord.hx  <- as.matrix(expand.grid(lapply(knot, function(s) diff(s))))
+  coord.ehx <- as.matrix(expand.grid(lapply(knot, function(s)
+                         diff(c(s[1:(length(s)-1)], s[length(s)]+0.1)))))
   d.loc <- choose(d + m, m)
-  P <- apply(coord, 1, function(v) compute.locpoly(v, eval, d, d.loc, x.min, x.max, knot, m, deriv))
-  P <- matrix(P, nrow(eval), nrow(coord) * d.loc)
+  P <- sapply(seq_len(nrow(coord.tx)), function(i) compute.locpoly(eval, coord.tx[i,], coord.hx[i,],
+                                                   coord.ehx[i,], d.loc, m, deriv))
+  P <- matrix(P, nrow(eval), nrow(coord.tx) * d.loc)
   return(P)
 }
 
-#Generate tensor-product basis or partitioning basis
-genDesign <- function(eval, x, method, m, J, smooth, knot, deriv) {
+# Generate tensor-product basis or partitioning basis
+genDesign <- function(eval, method, m, J, smooth, knot, deriv) {
   if (method == "bs" | method == "wav") {
     S <- list()
-    for (j in 1 : ncol(x)) {
-      S[[j]] <- design.margin(eval[,j], x[,j], method, m, J[j], smooth, knot[[j]], deriv[j])
+    for (j in 1 : ncol(eval)) {
+      S[[j]] <- design.margin(eval[,j], method, m, J[j], smooth, knot[[j]], deriv[j])
     }
     P <- tensor.prod.model.matrix(S)
   } else if (method == "pp") {
-    P <- locpoly(eval, x, m, knot, deriv)
+    P <- locpoly(eval, m, knot, deriv)
   }
   return(P)
 }
 
-#Shifted multivariate legendre polynomial
+# Shifted univariate legendre polynomial
+legen.j <- function(degree, x.j) {
+  P <- sapply(0:degree, function(k) choose(degree, k) * choose(degree+k, k) * (-x.j)^k)
+  if (length(x.j) == 1) {
+    P <- (-1)^degree * sum(P)
+  } else {
+    P <- (-1)^degree * rowSums(P)
+  }
+  return(P)
+}
+
+# Multivariate legendre polynomial
 legpoly <- function(degree, x) {
-  L <- 1
-  for (j in 1:length(degree)) {
-    if (degree[j] != 0) L <- L * sapply(x[,j], function(z) legendre(degree[j], 2*z-1)[1,])
+  L <- sapply(seq_len(length(degree)), function(j) legen.j(degree[j], x[,j]))
+  if (nrow(x) == 1) {
+    L <- prod(L)
+  } else {
+    L <- rowProds(L)
   }
   return(L)
 }
 
-#Generate bias vector
-genBias <- function(eval, x, method, m, q, knot, bknot, bsmooth, deriv) {
+# Generate bias vector
+genBias <- function(eval, method, m, q, knot, bknot, bsmooth, deriv) {
   d <- ncol(eval)
-  pos <- matrix(unlist(apply(eval, 1, function(z) pos.x(z, x, knot))), ncol = 2 * d, byrow = T)
-  pos.tx <- pos[,1:d, drop=F]
-  pos.hx <- pos[,(d+1):(2*d), drop=F]
+  pos <- locate.x(eval, d, knot)
+  B <- 0
   if (method == "bs") {
     index.m <- diag(m+1, d)
-    subset  <- sweep(index.m, 2, deriv)
-    subset[subset < 0] <- NA
-    index <- which(!is.na(rowSums(subset)))
-    B <- 0
+    index <- which(rowSums(sweep(index.m, 2, deriv) >= 0) == d)
     if (length(index) != 0) {
       for (j in index) {
           order <- m + 1 - deriv[j]
-          deriv.bias <- rep(0, d); deriv.bias[j] <- m+1;
-          B <- B + bernoulli(order, (eval[,j] - pos.tx[,j]) / pos.hx[,j]) *
-               pos.hx[,j]^order / factorial(order) *
-               genDesign(eval=eval, x=x, method=method, m=q, smooth=bsmooth,
+          deriv.bias <- index.m[j,]
+          B <- B + bernoulli(order, (eval[,j] - pos$tx[,j]) / pos$hx[,j]) *
+               pos$hx[,j]^order / factorial(order) *
+               genDesign(eval=eval, method=method, m=q, smooth=bsmooth,
                          knot=bknot, deriv=deriv.bias)
       }
     }
   } else if (method == "pp") {
     index.m <- t(xsimplex(d, m+1))
-    subset  <- sweep(index.m, 2, deriv)
-    subset[subset < 0] <- NA
-    index <- which(!is.na(rowSums(subset)))
-    B <- 0
+    index <- which(rowSums(sweep(index.m, 2, deriv) >= 0) == d)
     if (length(index) != 0) {
       for (j in index) {
-        deriv.bias <- index.m[j,]; order <- subset[j,];
-        B <- B + legpoly(order, (eval - pos.tx) / pos.hx) * colProds(t(pos.hx)^order) /
+        deriv.bias <- index.m[j,]; order <- deriv.bias - deriv
+        B <- B + legpoly(order, (eval - pos$tx) / pos$hx) * colProds(t(pos$hx)^order) /
                  prod(factorial(order)) / prod(choose(2 * order, order)) *
-                 genDesign(eval=eval, x=x, method=method, m=q, knot=bknot, deriv=deriv.bias)
+                 genDesign(eval=eval, method=method, m=q, knot=bknot, deriv=deriv.bias)
       }
     }
   }
   return(B)
 }
 
-#Generate squared bias, only for dpi function
-genB <- function(y, x, xmin, xmax, method, m, kappa, deriv, ktype, vce, proj, proj.bias) {
-  d <- ncol(x)
-  nknot <- rep(kappa, d)
-  if (ktype == "uni") knot <- genKnot.u(xmin, xmax, d, nknot)
-  if (ktype == "qua") knot <- genKnot.q(x, d, nknot)
-  pos <- matrix(unlist(apply(x, 1, function(z) pos.x(z, x, knot))), ncol = 2 * d, byrow = T)
-  pos.tx <- pos[,1:d, drop=F]
-  pos.hx <- pos[,(d+1):(2*d), drop=F]
-  if (method == "bs") {
-    index.m <- diag(m+1, d)
-    subset  <- sweep(index.m, 2, deriv)
-    subset[subset < 0] <- NA
-    index <- which(!is.na(rowSums(subset)))
-    B <- 0
-    if (length(index) != 0) {
-      for (j in index) {
-        order <- m + 1 - deriv[j]
-        deriv.bias <- rep(0, d); deriv.bias[j] <- m+1
-        mu.bias.deriv <- lsprobust(y, x, x, method = method, m = m+2, deriv = deriv.bias, vce = vce,
-                                    knot = knot, same = T)$Estimate[,"tau.cl"]
-        B <- B + bernoulli(order, (x[,j] - pos.tx[,j]) / pos.hx[,j]) *
-                 pos.hx[,j]^order / factorial(order) * mu.bias.deriv
-      }
-    }
-    if (proj == T) {
-      bias.0 <- 0
-      for (j in 1:d) {
-        order0 <- index.m[j,]
-        mu.bias.0 <- lsprobust(y, x, x, method = method, m = m+2, deriv = order0, vce = vce,
-                               knot = knot, same = T)$Estimate[,"tau.cl"]
-        bias.0 <- bias.0 + bernoulli(m+1, (x[,j] - pos.tx[,j]) / pos.hx[,j]) *
-                           pos.hx[,j]^(m+1) / factorial(m+1) * mu.bias.0
-      }
-      B <- B - proj.bias %*% bias.0
-    }
-  } else if (method == "pp") {
-    index.m <- t(xsimplex(d, m+1))
-    subset  <- sweep(index.m, 2, deriv)
-    subset[subset < 0] <- NA
-    index <- which(!is.na(rowSums(subset)))
-    B <- 0
-    if (length(index) != 0) {
-      for (j in index) {
-        deriv.bias <- index.m[j,]; order <- subset[j,]
-        mu.bias.deriv <- lsprobust(y, x, x, method = method, m = m+2, deriv = deriv.bias, vce = vce,
-                                    knot = knot, same = T)$Estimate[,"tau.cl"]
-        B <- B + legpoly(order, (x - pos.tx) / pos.hx) * colProds(t(pos.hx)^order) /
-                 prod(factorial(order)) / prod(choose(2 * order, order)) * mu.bias.deriv
-      }
-    }
-    if (proj == T) {
-      bias.0 <- 0
-      for (j in 1:nrow(index.m)) {
-        order0 <- index.m[j,]
-        mu.bias.0 <- lsprobust(y, x, x, method = method, m = m+2, deriv = order0, vce = vce,
-                                knot = knot, same = T)$Estimate[,"tau.cl"]
-        bias.0 <- bias.0 + legpoly(order0, (x - pos.tx) / pos.hx) * colProds(t(pos.hx)^order0) /
-                           prod(factorial(order0)) / prod(choose(2 * order0, order0)) * mu.bias.0
-      }
-      B <- B - proj.bias %*% bias.0
-    }
-  }
-  B <- mean(B^2)
-  return(B)
-}
-
-#Generate residuls
+# Generate residuals
 lsprobust.res <- function(y, m, hii, vce, d) {
   n <- length(y)
   res <- matrix(NA,n,1)
@@ -326,86 +273,160 @@ qrXXinv <- function(x, ...) {
   return(inv)
 }
 
-#Generate ROT with global polynomials (for rot, do not provide deriv option,
-#since rates are the same as levels)
+# Generate ROT with global polynomials (for rot, deriv option not provided,
+# since rates are the same as levels)
 lspkselect.imse.rot <- function(y, x, m, method) {
   N <- nrow(x); d <- ncol(x)
   x.max <- colMaxs(x); x.min <- colMins(x)
-  z <- sweep(sweep(x, 2, x.min), 2, (x.max - x.min), FUN="/")
+  x <- scale(x, center=x.min, scale=x.max-x.min)
 
-  #(m+1)th deriv of g
   p   <- m + 4
   ind <- genIndex(m, d, method)
-  z.p <- gpoly(x, p, rep(0, d))
-  beta <- lm(y ~ z.p - 1)
-  coef.ind <- which(!is.na(beta$coefficients))
-  g.m.hat <- matrix(NA, N, nrow(ind))
-  cons.B <- c()
-  for (j in 1:nrow(ind)) {
-    g.m.hat[,j] <- gpoly(x, p, ind[j,])[,coef.ind] %*% beta$coeff[coef.ind]
-    if (method == "pp") cons.B[j]  <- prod(1 / (2*ind[j,] + 1) / factorial(ind[j,])^2 /
-                                             choose(2*ind[j,], ind[j,])^2)
-  }
-  if (method == "bs")  cons.B <- abs(bernoulli(2*m+2, 0)) / factorial(2*m+2)
-  if (method == "wav") cons.B <- 1/factorial(m+1)^2 * filelist$cwav[m]
+  x.p <- gpoly(x, p, rep(0, d))
+  est <- lm(y ~ x.p - 1)
+  beta <- est$coefficients; est <- est$fitted.values
+  coef.ind <- which(!is.na(beta))
 
   #bias constant
-  imse.b <- sum(colMeans(g.m.hat^2) * cons.B)
+  imse.b <- 0
+  if (method == "bs") {
+    cons.B <- abs(bernoulli(2*m+2, 0)) / factorial(2*m+2)
+  } else if (method == "wav") {
+    cons.B <- 1/factorial(m+1)^2 * filelist$cwav[m]
+  } else {
+    cons.B <-c()
+  }
+  if (method == "pp") {
+    for (j in 1:nrow(ind)) {
+      cons.B <- prod(1 / (2*ind[j,] + 1) / factorial(ind[j,])^2 / choose(2*ind[j,], ind[j,])^2)
+      imse.b <- imse.b + cons.B * mean((gpoly(x, p, ind[j,])[,coef.ind, drop=F] %*% beta[coef.ind])^2)
+    }
+  } else {
+    for (j in 1:nrow(ind)) {
+      imse.b <- imse.b + cons.B * mean((gpoly(x, p, ind[j,])[,coef.ind, drop=F] %*% beta[coef.ind])^2)
+    }
+  }
 
-  #variance constant
-  beta2 <- lm(y^2 ~ z.p - 1)
-  s2 <- mean(beta2$fitted.values - (beta$fitted.values)^2)
+  # variance constant
+  s2 <- mean(lm(y^2 ~ x.p - 1)$fitted.values - est^2)
 
-  if (method == "pp") cons.V <- choose(m+d, m)
+  if (method == "pp")  cons.V <- choose(m+d, m)
   else                 cons.V <- 1
   imse.v <- cons.V * s2
 
   k.rot <- ceiling((imse.b*2*(m+1)/(d*imse.v))^(1/(2*m+2+d)) * N^(1/(2*m+2+d)))
+
   return(k.rot)
 }
 
+getBeta <- function(y, x, method, m, smooth, knot, d) {
+  P <- genDesign(x, method, m=m, J=NULL, smooth=smooth, knot=knot, deriv=rep(0, d))
+  inv <- qrXXinv(P)
+  beta <- inv %*% crossprod(P, y)
+  return(beta)
+}
+
+genB <- function(y, x, d, method, m, deriv, knot, proj) {
+  pos <- locate.x(x, d, knot)
+  B <- 0
+  if (method == "bs") {
+    index.m <- diag(m+1, d)
+    index <- which(rowSums(sweep(index.m, 2, deriv) >= 0) == d)
+    beta <- getBeta(y, x, method="bs", m=m+1, smooth=m, knot=knot, d=d)
+    if (length(index) != 0) {
+      for (j in index) {
+        order <- m + 1 - deriv[j]
+        B <- B + bernoulli(order, (x[,j] - pos$tx[,j]) / pos$hx[,j]) * pos$hx[,j]^order / factorial(order) *
+             genDesign(x, method="bs", m=m+1, J=NULL, smooth=m, knot=knot, deriv=index.m[j,]) %*% beta
+      }
+    }
+    if (proj) {
+      bias.0 <- 0
+      for (j in 1:d) {
+        bias.0 <- bias.0 + bernoulli(m+1, (x[,j] - pos$tx[,j]) / pos$hx[,j]) * pos$hx[,j]^(m+1) / factorial(m+1) *
+                  genDesign(x, method="bs", m=m+1, J=NULL, smooth=m, knot=knot, deriv=index.m[j,]) %*% beta
+      }
+      beta <- getBeta(bias.0, x, method="bs", m=m, smooth=m-1, knot=knot, d=d)
+      B <- B - genDesign(x, method="bs", m=m, J=NULL, smooth=m-1, knot=knot, deriv=deriv) %*% beta
+    }
+  } else if (method == "pp") {
+    index.m <- t(xsimplex(d, m+1))
+    index <- which(rowSums(sweep(index.m, 2, deriv) >= 0) == d)
+    beta <- getBeta(y, x, method="pp", m=m+1, smooth=NULL, knot=knot, d=d)
+    if (length(index) != 0) {
+      for (j in index) {
+        order <- index.m[j,] - deriv
+        B <- B + legpoly(order, (x - pos$tx) / pos$hx) * colProds(t(pos$hx)^order) /
+                 prod(factorial(order)) / prod(choose(2 * order, order)) *
+                 genDesign(x, method="pp", m=m+1, J=NULL, smooth=NULL, knot=knot, deriv=index.m[j,]) %*% beta
+      }
+    }
+    if (proj) {
+      bias.0 <- 0
+      for (j in 1:nrow(index.m)) {
+        order0 <- index.m[j,]
+        bias.0 <- bias.0 + legpoly(order0, (x - pos$tx) / pos$hx) * colProds(t(pos$hx)^order0) /
+                           prod(factorial(order0)) / prod(choose(2 * order0, order0)) *
+                           genDesign(x, method="pp", m=m+1, J=NULL, smooth=NULL, knot=knot, deriv=order0) %*% beta
+      }
+      beta <- getBeta(bias.0, x, method="pp", m=m, smooth=NULL, knot=knot, d=d)
+      B <- B - genDesign(x, method="pp", m=m, J=NULL, smooth=NULL, knot=knot, deriv=deriv) %*% beta
+    }
+  }
+  B <- mean(B^2)
+  return(B)
+}
+
+genV <- function(y, x, d, method, m, J, knot, deriv, vce) {
+  P <- genDesign(x, method, m, J, smooth=m-1, knot, rep(0, d))
+  invG.p <- qrXXinv(P)
+  basis.p <- genDesign(x, method, m, J, smooth=m-1, knot, deriv)
+  hii.p <- rowSums((P %*% invG.p) * P); hii.p[hii.p >= 0.9] <- 0.9
+  hii.p[hii.p < 0] <- 0; d.p <- ncol(P)
+  predict.p <- P %*% invG.p %*% crossprod(P, y)
+  res.p <- lsprobust.res(y, predict.p, hii.p, vce, d.p)
+  se.cl <- sqrt(rowSums((basis.p %*% invG.p %*% lsprobust.vce(P, res.p) %*% invG.p) * basis.p))
+  return(se.cl)
+}
+
+# DPI selector
 lspkselect.imse.dpi <- function(y, x, m, method, ktype, vce, deriv, proj) {
   k.rot <- lspkselect.imse.rot(y, x, m, method)
-  N <- nrow(x); d <- ncol(x)
+  N <- nrow(x); d <- ncol(x); q <- sum(deriv)
   x.max <- colMaxs(x); x.min <- colMins(x)
-  z <- sweep(sweep(x, 2, x.min), 2, (x.max - x.min), FUN="/")
+  x <- scale(x, center=x.min, scale=x.max-x.min)
+  if (ktype == "uni") {
+    knot <- genKnot.u(rep(0, d), rep(1, d), d, rep(k.rot, d))
+  } else {
+    knot <- genKnot.q(x, d, rep(k.rot, d))
+  }
+  if (method == "wav") {
+    J <- pmax(ceiling(log2(rep(k.rot, d)+1)), ceiling(log2(2*(m+2))))
+  } else {
+    J <- NULL
+  }
 
-  #estimate deriv
+  # bias constant
+  # estimate deriv
   if (method == "wav") {
     ind <- genIndex(m, d, "wav")
-    g.m.hat <- matrix(NA, N, nrow(ind))
+    beta <- genDesign(x, method="bs", m=m+1, J=NULL, smooth=m, knot=knot, deriv=rep(0, d))
+    beta <- lm(y ~ beta-1)$coefficients; index <- which(!is.na(beta))
+    imse.b <- 0
     for (j in 1:nrow(ind)) {
-      g.m.hat[,j] <- lsprobust(y, z, z, method = "bs", m = m+2, deriv = ind[j,], vce = vce,
-                               nknot = rep(k.rot, d), ktype = ktype, same = T)$Estimate[,"tau.cl"]
+      imse.b <- imse.b + mean((genDesign(x, method="bs", m=m+1, J=NULL, smooth=m,
+                         knot=knot, deriv=ind[j,])[,index, drop=F] %*% beta[index])^2)
     }
+    imse.b <- imse.b / factorial(m+1)^2 * filelist$cwav[m]
+  } else {
+    imse.b <- genB(y, x, d, method, m, deriv, knot, proj) * (k.rot+1)^(2*(m-q+1))
   }
 
-  g.deriv.se <- lsprobust(y, z, z, method = method, m = m+1, deriv = deriv, vce = vce,
-                          nknot = rep(k.rot, d), ktype = ktype, same = T)$Estimate[,"se.cl"]
-
-  q <- sum(deriv)
-
-  #bias constant
-  if (method != "wav") {
-    proj.bias <- NULL
-    if (proj == T) {
-      if (ktype == "uni") knot <- genKnot.u(rep(0,d), rep(1,d), d, rep(k.rot, d))
-      if (ktype == "qua") knot <- genKnot.q(z, d, rep(k.rot, d))
-      P <- genDesign(z, z, method=method, m=m, smooth=m-1, knot=knot, deriv=rep(0, d))
-      invG.p <- qrXXinv(P)
-      basis.p <- genDesign(z, z, method=method, m=m, smooth=m-1, knot=knot, deriv=deriv)
-      proj.bias <- basis.p %*% invG.p %*% t(P)
-    }
-    imse.b <- genB(y, z, rep(0, d), rep(1, d), method, m, k.rot, deriv, ktype, vce,
-                   proj=proj, proj.bias=proj.bias) * (k.rot+1)^(2*(m-q+1))
-  } else  {
-    imse.b <- sum(colMeans(g.m.hat^2)) / factorial(m+1)^2 * filelist$cwav[m]
-  }
-
-  #variance constant
-  imse.v <- mean(g.deriv.se^2) * N * (k.rot+1)^((-d-2*q)/d)
+  # variance constant
+  imse.v <- mean((genV(y, x, d, method, m, J, knot, deriv, vce))^2) * N * (k.rot+1)^((-d-2*q)/d)
 
   k.dpi <- ceiling((imse.b*2*(m-q+1)/((d+2*q)*imse.v))^(1/(2*m+2+d)) * N^(1/(2*m+2+d)))
+
   return(k.dpi)
 }
 
@@ -418,20 +439,20 @@ lssqrtm <- function(A) {
 lsprobust.sup.pl <- function(num, denom, N, B, level) {
   temp.sup <- rep(NA, B)
   for (i in 1:B) {
-    eps    <- matrix(rnorm(N, 0, 1), ncol = 1)
-    tx     <- (num %*% eps) / denom
+    eps         <- matrix(rnorm(N, 0, 1), ncol = 1)
+    tx          <- (num %*% eps) / denom
     temp.sup[i] <- max(abs(tx))
   }
   q <- quantile(temp.sup, level/100, na.rm=T)
   return(q)
 }
 
-lsprobust.sup.wb <- function(num, denom, res, N, B, level) {
+lsprobust.sup.wb <- function(num1, num2, denom, res, N, B, level) {
   temp.sup <- rep(NA, B)
   for (i in 1:B) {
     eta <- rbinom(N, 1, 0.5) * 2 - 1
     res.wb <- eta * res
-    tx <- (num %*% res.wb) / denom
+    tx <- (num1 %*% crossprod(num2, res.wb)) / denom
     temp.sup[i] <- max(abs(tx))
   }
   q <- quantile(temp.sup, level/100, na.rm=T)

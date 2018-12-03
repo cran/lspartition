@@ -8,7 +8,7 @@
 \usage{
 lsplincom(y, x, G, R, eval = NULL, neval = NULL, level = 95,
   band = FALSE, cb.method = NULL, cb.grid = NULL, cb.ngrid = 50,
-  B = 1000, subset = NULL, ...)
+  B = 1000, subset = NULL, knot = NULL, ...)
 
 \method{print}{lsplincom}(x, ...)
 
@@ -25,31 +25,37 @@ lsplincom(y, x, G, R, eval = NULL, neval = NULL, level = 95,
 of the conditional mean estimator of one group, and they are ordered ascendingly along the value
 of \code{G}.}
 
-\item{eval}{Evaluation points. A matrix or data frame. By default it uses 20 quantile-spaced points.}
+\item{eval}{Evaluation points. A matrix or data frame.}
 
-\item{neval}{Number of quantile-spaced evaluating points. Default is \code{neval=20}.}
+\item{neval}{Number of quantile-spaced evaluating points.}
 
-\item{level}{Confidence level used for confidence intervals; default is \code{level = 95}.}
+\item{level}{Confidence level used for confidence intervals; default is \code{level=95}.}
 
 \item{band}{If true, the critical value for constructing confidence band is calculated. Default
-is \code{band = FALSE}.}
+is \code{band=FALSE}.}
 
 \item{cb.method}{Method used to calculate the critical value for confidence bands.
 Options are \code{"pl"} for a simulation-based plug-in procedure, and
-\code{"wb"} for a wild bootstrap procedure. If \code{band = TRUE} with
-\code{cb.method} unspecified, default is \code{cb.method = "pl"}.}
+\code{"wb"} for a wild bootstrap procedure. If \code{band=TRUE} with
+\code{cb.method} unspecified, default is \code{cb.method="pl"}.}
 
 \item{cb.grid}{A matrix containing all grid points used to construct confidence bands. Each row
 correponds to the coordinates of one grid point.}
 
 \item{cb.ngrid}{A numeric vector of the same length as \code{ncol(x)}. Each element corresponds to
 the number of grid points for each dimension used to implement uniform inference.
-Default is \code{uni.ngrid = 50}.}
+Default is \code{uni.ngrid=50}.}
 
 \item{B}{Number of simulated samples used to obtain the critical value for confidence bands.
-Default is \code{B = 1000}.}
+Default is \code{B=1000}.}
 
 \item{subset}{Optional rule specifying a subset of observations to be used.}
+
+\item{knot}{A list of numeric vectors giving the knot positions (including boundary knots) for each dimension
+which are used in the main regression. The length of the list is equal to \code{ncol(x)}.
+If not specified, it uses the number of knots either specified by users
+or computed by the companion command \code{lspkselect} to generate the
+corresponding knots according to the rule specified by \code{ktype}. See help for \code{\link{lsprobust}}.}
 
 \item{...}{Arguments to be passed to the function. See \code{lsprobust}.}
 
@@ -57,8 +63,8 @@ Default is \code{B = 1000}.}
 }
 \value{
 \item{\code{Estimate}}{ A matrix containing eval (grid points), N (effective sample sizes),
-                            tau.cl (point estimates with a basis of degree \code{m}), tau.bc (bias corrected point
-                            estimates with a basis of degree \code{q}), se.cl (standard error corresponding
+                            tau.cl (point estimates with a basis of order \code{m}), tau.bc (bias corrected point
+                            estimates with a basis of order \code{m.bc}), se.cl (standard error corresponding
                             to tau.cl), and se.rb (robust standard error).}
        \item{\code{sup.cval}}{ Critical value for constructing confidence bands.}
        \item{\code{opt}}{ A list containing options passed to the function.}

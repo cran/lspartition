@@ -14,27 +14,32 @@
 #'@param R A numeric vector giving the linear combination of interest. Each element is the coefficient
 #'         of the conditional mean estimator of one group, and they are ordered ascendingly along the value
 #'         of \code{G}.
-#'@param eval Evaluation points. A matrix or data frame. By default it uses 20 quantile-spaced points.
-#'@param neval Number of quantile-spaced evaluating points. Default is \code{neval=20}.
-#'@param level Confidence level used for confidence intervals; default is \code{level = 95}.
+#'@param eval Evaluation points. A matrix or data frame.
+#'@param neval Number of quantile-spaced evaluating points.
+#'@param level Confidence level used for confidence intervals; default is \code{level=95}.
 #'@param band If true, the critical value for constructing confidence band is calculated. Default
-#'            is \code{band = FALSE}.
+#'            is \code{band=FALSE}.
 #'@param cb.method Method used to calculate the critical value for confidence bands.
 #'                 Options are \code{"pl"} for a simulation-based plug-in procedure, and
-#'                 \code{"wb"} for a wild bootstrap procedure. If \code{band = TRUE} with
-#'                 \code{cb.method} unspecified, default is \code{cb.method = "pl"}.
+#'                 \code{"wb"} for a wild bootstrap procedure. If \code{band=TRUE} with
+#'                 \code{cb.method} unspecified, default is \code{cb.method="pl"}.
 #'@param cb.grid  A matrix containing all grid points used to construct confidence bands. Each row
 #'                 correponds to the coordinates of one grid point.
 #'@param cb.ngrid A numeric vector of the same length as \code{ncol(x)}. Each element corresponds to
 #'                 the number of grid points for each dimension used to implement uniform inference.
-#'                 Default is \code{uni.ngrid = 50}.
+#'                 Default is \code{uni.ngrid=50}.
 #'@param B    Number of simulated samples used to obtain the critical value for confidence bands.
-#'            Default is \code{B = 1000}.
+#'            Default is \code{B=1000}.
 #'@param subset Optional rule specifying a subset of observations to be used.
+#'@param knot A list of numeric vectors giving the knot positions (including boundary knots) for each dimension
+#'            which are used in the main regression. The length of the list is equal to \code{ncol(x)}.
+#'            If not specified, it uses the number of knots either specified by users
+#'            or computed by the companion command \code{lspkselect} to generate the
+#'            corresponding knots according to the rule specified by \code{ktype}. See help for \code{\link{lsprobust}}.
 #'@param ... Arguments to be passed to the function. See \code{lsprobust}.
 #'@return \item{\code{Estimate}}{ A matrix containing eval (grid points), N (effective sample sizes),
-#'                             tau.cl (point estimates with a basis of degree \code{m}), tau.bc (bias corrected point
-#'                             estimates with a basis of degree \code{q}), se.cl (standard error corresponding
+#'                             tau.cl (point estimates with a basis of order \code{m}), tau.bc (bias corrected point
+#'                             estimates with a basis of order \code{m.bc}), se.cl (standard error corresponding
 #'                             to tau.cl), and se.rb (robust standard error).}
 #'        \item{\code{sup.cval}}{ Critical value for constructing confidence bands.}
 #'        \item{\code{opt}}{ A list containing options passed to the function.}
@@ -64,7 +69,7 @@
 
 
 lsplincom <- function(y, x, G, R, eval=NULL, neval=NULL, level=95, band=FALSE, cb.method=NULL,
-                      cb.grid=NULL, cb.ngrid=50, B=1000, subset=NULL, ...) {
+                      cb.grid=NULL, cb.ngrid=50, B=1000, subset=NULL, knot=NULL, ...) {
 
   x <- as.matrix(x); R <- as.matrix(R)
   if (is.data.frame(y)) y <- y[,1]
@@ -88,14 +93,30 @@ lsplincom <- function(y, x, G, R, eval=NULL, neval=NULL, level=95, band=FALSE, c
   x.max <- rowMins(matrix(x.max, d, g))
   x.min <- rowMaxs(matrix(x.min, d, g))
 
+  if (d == 1 & is.vector(knot, mode="numeric")) {
+    knot <- list(knot)
+  }
+
   if (is.null(eval)) {
-    if (is.null(neval)) {
-      qseq <- seq(0, 1, 1/(20+1))
-      eval <- apply(x, 2, function(z) quantile(z, qseq[2:(length(qseq)-1)]))
+    if (!is.null(knot)) {
+      if (is.null(neval)) {
+        eval <- lapply(knot, function(z) cumsum(c(z[1], rep(diff(z)/11, each=11)))[-seq(1, by=11, length.out=length(z))])
+        eval <- as.matrix(expand.grid(eval))
+      } else {
+        qseq <- seq(0, 1, 1/(neval+1))
+        eval <- apply(x, 2, function(z) quantile(z, qseq[2:(length(qseq)-1)], names=F))
+        if (neval == 1) eval <- t(eval)
+      }
     } else {
-      qseq <- seq(0, 1, 1/(neval+1))
-      eval <- apply(x, 2, function(z) quantile(z, qseq[2:(length(qseq)-1)]))
-      if (neval == 1) eval <- t(eval)
+      ind <- rowSums((sweep(x, 2, x.min)>=0) + (sweep(x, 2, x.max)<=0)) == 2*d
+      if (is.null(neval)) {
+        qseq <- seq(0, 1, 1/(20+1))
+        eval <- apply(x[ind,, drop=F], 2, function(z) quantile(z, qseq[2:(length(qseq)-1)]))
+      } else {
+        qseq <- seq(0, 1, 1/(neval+1))
+        eval <- apply(x[ind,, drop=F], 2, function(z) quantile(z, qseq[2:(length(qseq)-1)]))
+        if (neval == 1) eval <- t(eval)
+      }
     }
   }
 
@@ -107,39 +128,41 @@ lsplincom <- function(y, x, G, R, eval=NULL, neval=NULL, level=95, band=FALSE, c
   tau.bc <- matrix(NA, nrow=neval, ncol=g)
   se.cl  <- matrix(NA, nrow=neval, ncol=g)
   se.bc  <- matrix(NA, nrow=neval, ncol=g)
-  num.list <- list(); denom.list <- list(); res.list <- list()
+  pl.num.list <- list(); wb1.num.list <- list(); wb2.num.list <- list()
+  denom.list <- list(); res.list <- list()
   uni.out <- FALSE; sup.quantile <- NA
 
   if (band == TRUE) {
     uni.out <- TRUE
     if (is.null(cb.method)) cb.method <- "pl"
     if (is.null(cb.grid)) {
-      #if (is.null(cb.ngrid)) {
-      #  index <- colAlls(rbind(apply(x, 1, ">=", x.min), apply(x, 1, "<=", x.max)))
-      #  cb.grid <- x[index, , drop=F]
-      #} else {
         cb.grid <- list()
         for (j in 1:d) {
-        cb.grid[[j]] <- seq(x.min[j], x.max[j], length.out = cb.ngrid+2)[2:(cb.ngrid+1)]
+          cb.grid[[j]] <- seq(x.min[j], x.max[j], length.out = cb.ngrid+2)[2:(cb.ngrid+1)]
         }
         cb.grid <- as.matrix(expand.grid(cb.grid))
-      #}
     }
   }
 
   for (j in 1:g) {
     y.j        <- y[G==G.val[j]]; x.j <- x[G==G.val[j], , drop = F]
-    fit        <- lsprobust(y.j, x.j, eval, neval, level=level, uni.out=uni.out,
-                             uni.method=cb.method, uni.grid=cb.grid, band=FALSE, ...)
+    fit        <- lsprobust(y.j, x.j, eval, neval, level=level, uni.out=uni.out, knot=knot,
+                            uni.method=cb.method, uni.grid=cb.grid, band=FALSE, ...)
     ng[j]      <- fit$opt$n
     tau.cl[,j] <- fit$Estimate[, "tau.cl"]
     tau.bc[,j] <- fit$Estimate[, "tau.bc"]
     se.cl[,j]  <- fit$Estimate[, "se.cl"]
     se.bc[,j]  <- fit$Estimate[, "se.rb"]
     if (band == TRUE) {
-      num.list[[j]]   <- fit$uni.output$t.num
-      denom.list[[j]] <- fit$uni.output$t.denom
-      res.list[[j]]   <- fit$uni.output$res
+      if (cb.method == "pl") {
+        pl.num.list[[j]] <- fit$uni.output$t.num.pl
+        denom.list[[j]]  <- fit$uni.output$t.denom
+      } else {
+        wb1.num.list[[j]] <- fit$uni.output$t.num.wb1
+        wb2.num.list[[j]] <- fit$uni.output$t.num.wb2
+        denom.list[[j]]   <- fit$uni.output$t.denom
+        res.list[[j]]     <- fit$uni.output$res
+      }
     }
   }
 
@@ -173,24 +196,27 @@ lsplincom <- function(y, x, G, R, eval=NULL, neval=NULL, level=95, band=FALSE, c
 
   if (band == TRUE) {
     temp.sup <- rep(NA, B)
-    cols <- sapply(num.list, FUN = ncol)
-    rows <- nrow(num.list[[1]])
     if (cb.method == "pl") {
+      cols <- sapply(pl.num.list, FUN = ncol)
+      rows <- nrow(pl.num.list[[1]])
       for (i in 1:B) {
         zeta    <- matrix(rnorm(sum(cols), 0, 1), ncol = 1)
         index.r <- cumsum(cols); index.l <- c(0, index.r[-length(index.r)]) + 1
-        num     <- sapply(1:g, function(z) num.list[[z]] %*% zeta[(index.l[z]: index.r[z]),] * R[z,])
-        denom   <- sapply(1:g, function(z) denom.list[[z]]^2 * R[z, ]^2)
+        num     <- sapply(1:g, function(z) pl.num.list[[z]] %*% zeta[(index.l[z]: index.r[z]),] * R[z,])
+        denom   <- sapply(1:g, function(z) denom.list[[z]]^2 * R[z,]^2)
         num     <- rowSums(matrix(unlist(num), nrow=rows))
         denom   <- sqrt(rowSums(matrix(unlist(denom), nrow=rows)))
         temp.sup[i] <- max(abs(num / denom))
       }
     } else {
+      cols <- sapply(wb2.num.list, FUN = nrow)
+      rows <- nrow(wb1.num.list[[1]])
       for (i in 1:B) {
         w <- rbinom(sum(cols), 1, 0.5) * 2 - 1
         index.r <- cumsum(cols); index.l <- c(0, index.r[-length(index.r)]) + 1
-        num     <- sapply(1:g, function(z) num.list[[z]] %*% (res.list[[z]] *
-                               w[index.l[z]: index.r[z]]) * R[z,])
+        num     <- sapply(1:g, function(z) wb1.num.list[[z]] %*%
+                               crossprod(wb2.num.list[[z]], (res.list[[z]] *
+                               w[index.l[z]: index.r[z]])) * R[z,])
         denom   <- sapply(1:g, function(z) denom.list[[z]]^2 * R[z, ]^2)
         num     <- rowSums(matrix(unlist(num), nrow=rows))
         denom   <- sqrt(rowSums(matrix(unlist(denom), nrow=rows)))

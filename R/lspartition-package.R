@@ -13,13 +13,14 @@
 #'             provides further implementation details and empirical illustration.
 #'
 #'@importFrom stats lm sd complete.cases quantile qnorm poly rbinom rnorm
-#'@importFrom matrixStats rowProds colAlls colProds colMaxs colMins rowMins rowMaxs
+#'@importFrom matrixStats rowProds colProds colMaxs colMins rowMins rowMaxs
 #'@importFrom combinat xsimplex
 #'@importFrom splines splineDesign
-#'@importFrom pracma bernoulli legendre
+#'@importFrom pracma bernoulli
 #'@importFrom mgcv tensor.prod.model.matrix
-#'@importFrom graphics lines plot polygon
+#@importFrom graphics lines plot polygon
 #'@importFrom MASS ginv
+#@importFrom dplyr distinct
 #'@import ggplot2
 #'@docType package
 #'@name lspartition-package

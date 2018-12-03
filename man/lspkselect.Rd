@@ -28,18 +28,18 @@ length as \code{ncol(x)}. Default is \code{deriv=c(0,...,0)}.}
 
 \item{method}{Type of basis used for expansion. Options are \code{"bs"} for B-splines,
 \code{"wav"} for compact-supported wavelets (Cohen, Daubechies and Vial, 1993),
-and \code{"pp"} for piecewise polynomials. Default is \code{method = "bs"}.}
+and \code{"pp"} for piecewise polynomials. Default is \code{method="bs"}.}
 
 \item{ktype}{Knot placement. Options are \code{"uni"} for evenly spaced knots over the
 support of \code{x} and \code{"qua"} for quantile-spaced knots. Default is \code{ktype="uni"}.}
 
 \item{kselect}{Method for selecting the number of inner knots used by \code{lspkselect}. Options
-are \code{"imse-rot"} for ROT implementation of IMSE-optimal number of knots and
+are \code{"imse-rot"} for ROT implementation of IMSE-optimal number of knots,
 \code{"imse-dpi"} for second generation of DPI implementation of IMSE-optimal number
-of knots. Default is \code{kselect = "imse-dpi"}.}
+of knots, and \code{"all"} for both. Default is \code{kselect="imse-dpi"}.}
 
-\item{proj}{If true, projection of smoothing bias leading error onto the lower-order approximating space
-is included for bias correction (splines and piecewise polynomial only). The default is \code{proj = TRUE}.}
+\item{proj}{If true, projection of leading approximation error onto the lower-order approximating space
+is included for bias correction (splines and piecewise polynomial only). Default is \code{proj=TRUE}.}
 
 \item{bc}{Bias correction method. Options are \code{"bc1"} for higher-order bias correction,
 \code{"bc2"} for least squares bias correction, and \code{"bc3"} for plug-in bias correction.

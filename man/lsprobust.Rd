@@ -23,9 +23,9 @@ lsprobust(y, x, eval = NULL, neval = NULL, method = "bs", m = NULL,
 
 \item{x}{Independent variable. A matrix or data frame.}
 
-\item{eval}{Evaluation points. A matrix or data frame. By default it uses 20 quantile-spaced points.}
+\item{eval}{Evaluation points. A matrix or data frame.}
 
-\item{neval}{Number of quantile-spaced evaluating points. Default is \code{neval=20}.}
+\item{neval}{Number of quantile-spaced evaluating points.}
 
 \item{method}{Type of basis used for expansion. Options are \code{"bs"} for B-splines,
 \code{"wav"} for compact-supported wavelets (Cohen, Daubechies and Vial, 1993),
@@ -35,39 +35,39 @@ and \code{"pp"} for piecewise polynomials. Default is \code{method = "bs"}.}
 if \code{smooth} is specified but \code{m} is unspecified, default is \code{m=smooth+2}.}
 
 \item{m.bc}{Order of basis used to estimate leading bias. Default is \code{m.bc=m+1}. For B-splines,
-if \code{bsmooth} is specified but \code{q} is unspecified, default is \code{q=bsmooth+2}.}
+if \code{bsmooth} is specified but \code{m.bc} is unspecified, default is \code{m.bc=bsmooth+2}.}
 
 \item{deriv}{Derivative order of the regression function to be estimated. A vector object of the same
 length as \code{ncol(x)}. Default is \code{deriv=c(0,...,0)}.}
 
 \item{smooth}{Smoothness of B-splines for point estimation. When \code{smooth=s}, B-splines have \code{s}-order
-continuous derivatives. Default is \code{smooth=m-1}.}
+continuous derivatives. Default is \code{smooth=m-2}.}
 
-\item{bsmooth}{Smoothness of B-splines for bias correction. Default is \code{bsmooth=q-1}.}
+\item{bsmooth}{Smoothness of B-splines for bias correction. Default is \code{bsmooth=m.bc-2}.}
 
 \item{ktype}{Knot placement. Options are \code{"uni"} for evenly-spaced knots over the
 support of \code{x} and \code{"qua"} for quantile-spaced knots. Default is \code{ktype="uni"}.}
 
-\item{knot}{A list of numeric vectors giving the positions of inner partitioning knots for each dimension
+\item{knot}{A list of numeric vectors giving the knot positions (including boundary knots) for each dimension
 which are used in the main regression. The length of the list is equal to \code{ncol(x)}.
 If not specified, it uses the number of knots either specified by users
 or computed by the companion command \code{lspkselect} to generate the
-corresponding inner knots according to the rule specified by \code{ktype}.}
+corresponding knots according to the rule specified by \code{ktype}.}
 
 \item{nknot}{A numeric vector of the same length as \code{ncol(x)}. Each element corresponds to
-the number of inner partitioning knots for each dimension used in the main regression.
+the number of \emph{inner} partitioning knots for each dimension used in the main regression.
 If not specified, \code{nknot} is computed by the companion command \code{lspkselect}.}
 
-\item{same}{If TRUE, the same inner knots are used for bias correction as that in the
-main regression. Default is \code{same = TRUE}.}
+\item{same}{If TRUE, the same knots are used for bias correction as that in the
+main regression. Default is \code{same=TRUE}.}
 
-\item{bknot}{A list of numeric vectors giving the inner knots used for bias correction. If not
-specified and \code{same = FALSE}, it uses the number of knots either specified by
-users or computed by the companion command \code{lspkselect} to generate the innter
+\item{bknot}{A list of numeric vectors giving knot positions used for bias correction. If not
+specified and \code{same=FALSE}, it uses the number of knots either specified by
+users or computed by the companion command \code{lspkselect} to generate
 knots according to the rule specified by \code{ktype}.}
 
 \item{bnknot}{A numeric vector of the same length as \code{ncol(x)}. Each element corresponds
-to the number of inner partitioning knots for each dimension used for bias
+to the number of \emph{inner} partitioning knots for each dimension used for bias
 correction. If not specified, \code{bnknot} is computed by the companion command \code{lspkselect}.}
 
 \item{J}{A numeric vector containing resolution levels of father wavelets for each dimension.}
@@ -77,13 +77,14 @@ correction. If not specified, \code{bnknot} is computed by the companion command
 Default are \code{"bc3"} for splines and local polynomial partition series and \code{"bc2"}
 for wavelets.}
 
-\item{proj}{If true, projection of smoothing bias leading error onto the lower-order approximating space
-is included for bias correction (splines and piecewise polynomial only). The default is \code{proj = TRUE}.}
+\item{proj}{If true, projection of leading approximation error onto the lower-order approximating space
+is included for bias correction (splines and piecewise polynomials only). Default is
+\code{proj=TRUE}.}
 
-\item{kselect}{Method for selecting the number of inner knots used by \code{lspkselect}. Options
+\item{kselect}{Method for selecting the number of \emph{inner} knots used by \code{lspkselect}. Options
 are \code{"imse-rot"} for ROT implementation of IMSE-optimal number of knots and
 \code{"imse-dpi"} for second generation of DPI implementation of IMSE-optimal number
-of knots. Default is \code{kselect = "imse-dpi"}.}
+of knots. Default is \code{kselect="imse-dpi"}.}
 
 \item{vce}{Procedure to compute the variance-covariance matrix estimator. Options are
 \itemize{
@@ -97,29 +98,29 @@ of knots. Default is \code{kselect = "imse-dpi"}.}
                    with hc3 weights.
 }}
 
-\item{level}{Confidence level used for confidence intervals; default is \code{level = 95}.}
+\item{level}{Confidence level used for confidence intervals; default is \code{level=95}.}
 
 \item{uni.method}{Method used to implement uniform inference. Options are \code{"pl"} for
 a simulation-based plug-in procedure, \code{"wb"} for a wild bootstrap
 procedure. If unspecified, neither procedure is
-implemented. Default is \code{uni.method = NULL}.}
+implemented. Default is \code{uni.method=NULL}.}
 
 \item{uni.grid}{A matrix containing all grid points used to implement uniform inference. Each row
 correponds to the coordinates of one grid point.}
 
 \item{uni.ngrid}{A numeric vector of the same length as \code{ncol(x)}. Each element corresponds to
 the number of grid points for each dimension used to implement uniform inference.
-Default is \code{uni.ngrid = 50}.}
+Default is \code{uni.ngrid=50}.}
 
-\item{uni.out}{If true, the quantities used to implement uniform inference is output. Default is
-\code{uniform = FALSE}.}
+\item{uni.out}{If true, the quantities used to implement uniform inference is outputted. Default is
+\code{uni.out=FALSE}.}
 
 \item{band}{If true, the critical value for constructing confidence band is calculated. Default
-is \code{band = FALSE}. If \code{band = TRUE} with \code{uni.method} unspecified,
-default is \code{uni.method = "pl"}.}
+is \code{band=FALSE}. If \code{band=TRUE} with \code{uni.method} unspecified,
+default is \code{uni.method="pl"}.}
 
 \item{B}{Number of simulated samples used to obtain the critical value for confidence bands.
-Default is \code{B = 1000}.}
+Default is \code{B=1000}.}
 
 \item{subset}{Optional rule specifying a subset of observations to be used.}
 
@@ -129,11 +130,13 @@ Default is \code{B = 1000}.}
 }
 \value{
 \item{\code{Estimate}}{ A matrix containing eval (grid points), N (effective sample sizes),
-                            tau.cl (point estimates with a basis of degree \code{m}), tau.bc (bias corrected point
-                            estimates with a basis of degree \code{q}), se.cl (standard error corresponding
+                            tau.cl (point estimates with a basis of order \code{m}), tau.bc (bias corrected point
+                            estimates with a basis of order \code{m.bc}), se.cl (standard error corresponding
                             to tau.cl), and se.rb (robust standard error).}
        \item{\code{k.num}}{ A matrix containing the number of inner partitioning knots used in the main
                             regression and bias correction for each covariate.}
+       \item{\code{knot}}{ A list of knots for point estimation.}
+       \item{\code{bknot}}{ A list of knots for bias correction.}
        \item{\code{sup.cval}}{ Critical value for constructing confidence band.}
        \item{\code{uni.output}}{ A list containing quantities used to implement uniform inference.}
        \item{\code{opt}}{ A list containing options passed to the function.}
