@@ -4,10 +4,11 @@
 \alias{lsprobust.plot}
 \title{Graphic Presentation of Results for \pkg{lspartition} Package}
 \usage{
-lsprobust.plot(..., alpha = NULL, type = NULL, CS = "ci", CStype = NULL,
-  title = "", xlabel = "", ylabel = "", lty = NULL, lwd = NULL,
-  lcol = NULL, pty = NULL, pwd = NULL, pcol = NULL, CSshade = NULL,
-  CScol = NULL, legendTitle = NULL, legendGroups = NULL)
+lsprobust.plot(..., alpha = NULL, type = NULL, CS = "ci",
+  CStype = NULL, title = "", xlabel = "", ylabel = "",
+  lty = NULL, lwd = NULL, lcol = NULL, pty = NULL, pwd = NULL,
+  pcol = NULL, CSshade = NULL, CScol = NULL, legendTitle = NULL,
+  legendGroups = NULL)
 }
 \arguments{
 \item{...}{Objects returned by \code{\link{lsprobust}}.}
@@ -30,7 +31,7 @@ be plotted. If more than one is provided, they will be applied to data series ac
 If \code{CS = "all"}, pointwise confidence intervals are forced to be represented by error bars,
 and uniform bands are represented by both lines and regions.}
 
-\item{title}{Strings, title of the plot.}
+\item{title}{String, title of the plot.}
 
 \item{xlabel}{Strings, labels for x-axis.}
 
@@ -79,7 +80,7 @@ they will be applied to data series accordingly.}
 
 \item{legendTitle}{String, title of legend.}
 
-\item{legendGroups}{String Vector, group names used in legend.}
+\item{legendGroups}{String vector, group names used in legend.}
 }
 \value{
 A standard \code{\link{ggplot2}} object is returned, hence can be used for further
@@ -87,12 +88,12 @@ A standard \code{\link{ggplot2}} object is returned, hence can be used for furth
 }
 \description{
 \code{lsprobust.plot} plots estimated regression functions and confidence regions using the \pkg{lspartition} package.
-            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018a)} for more technical details and further references.
+            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2019a)} for complete details.
 
             Companion command: \code{\link{lsprobust}} for partitioning-based least squares regression
             estimation and inference; \code{\link{lsprobust.plot}} for plotting results; \code{\link{lsplincom}} for multiple sample estimation and inference.
 
-            A detailed introduction to this command is given in \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018b)}.
+            A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2019b)}.
 
             For more details, and related Stata and R packages useful for empirical analysis,
             visit \url{https://sites.google.com/site/nppackages/}.
@@ -109,17 +110,17 @@ lsprobust.plot(est)
 
 }
 \references{
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018a): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Large Sample Properties of Partitioning-Based Series Estimators}. Working paper.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
 
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018b): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
 }
 \seealso{
 \code{\link{lsprobust}}, \code{\link{lspkselect}}, \code{\link{lsplincom}}, \code{\link{ggplot2}}.
 }
 \author{
-Matias D. Cattaneo, University of Michigan, Ann Arbor, MI. \email{cattaneo@umich.edu}.
+Matias D. Cattaneo, Princeton University, Princeton, NJ. \email{cattaneo@princeton.edu}.
 
 Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
 
-Yingjie Feng (maintainer), University of Michigan, Ann Arbor, MI. \email{yjfeng@umich.edu}.
+Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yjfeng@umich.edu}.
 }

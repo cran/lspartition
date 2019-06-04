@@ -1,22 +1,22 @@
 #'Partitioning-Based Least Squares Regression with Robust Inference.
 #'
-#'@description \code{lsprobust} implements partitioning-based least squares point estimators for the regression function and derivatives thereof. It also provides robust bias-corrected (pointwise and uniform) inference, including simulation-based confidence bands. Three series methods are supported: B-splines, compact supported wavelets, and piecewise polynomials (generalized regressograms).
-#'             See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018a)} for more technical details and further references.
+#'@description \code{lsprobust} implements partitioning-based least squares point estimators for the regression function and its derivatives. It also provides robust bias-corrected (pointwise and uniform) inference, including simulation-based confidence bands. Three series methods are supported: B-splines, compact supported wavelets, and piecewise polynomials.
+#'             See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2019a)} for complete details.
 #'
 #'             Companion commands: \code{\link{lspkselect}} for data-driven IMSE-optimal selection of the number of knots on rectangular partitions; \code{\link{lsprobust.plot}} for plotting results; \code{\link{lsplincom}} for multiple sample estimation and inference.
 #'
-#'             A detailed introduction to this command is given in \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018b)}.
+#'             A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2019b)}.
 #'
 #'             For more details, and related Stata and R packages useful for empirical analysis,
 #'             visit \url{https://sites.google.com/site/nppackages/}.
 #'
-#'@param y Outcome variable
+#'@param y Outcome variable.
 #'@param x Independent variable. A matrix or data frame.
 #'@param eval Evaluation points. A matrix or data frame.
 #'@param neval Number of quantile-spaced evaluating points.
 #'@param method Type of basis used for expansion. Options are \code{"bs"} for B-splines,
-#'              \code{"wav"} for compact-supported wavelets (Cohen, Daubechies and Vial, 1993),
-#'              and \code{"pp"} for piecewise polynomials. Default is \code{method = "bs"}.
+#'              \code{"wav"} for compactly supported wavelets (Cohen, Daubechies and Vial, 1993),
+#'              and \code{"pp"} for piecewise polynomials. Default is \code{method="bs"}.
 #'@param m Order of basis used in the main regression. Default is \code{m=2}. For B-splines,
 #'         if \code{smooth} is specified but \code{m} is unspecified, default is \code{m=smooth+2}.
 #'@param m.bc Order of basis used to estimate leading bias. Default is \code{m.bc=m+1}. For B-splines,
@@ -36,17 +36,17 @@
 #'@param nknot A numeric vector of the same length as \code{ncol(x)}. Each element corresponds to
 #'             the number of \emph{inner} partitioning knots for each dimension used in the main regression.
 #'             If not specified, \code{nknot} is computed by the companion command \code{lspkselect}.
-#'@param same If TRUE, the same knots are used for bias correction as that in the
+#'@param same If \code{TRUE}, the same knots are used for bias correction as that for the
 #'            main regression. Default is \code{same=TRUE}.
 #'@param bknot A list of numeric vectors giving knot positions used for bias correction. If not
 #'             specified and \code{same=FALSE}, it uses the number of knots either specified by
 #'             users or computed by the companion command \code{lspkselect} to generate
 #'             knots according to the rule specified by \code{ktype}.
-#'@param bc Bias correction method. Options are \code{"bc1"} for higher-order bias correction,
+#'@param bc Bias correction method. Options are \code{"bc1"} for higher-order-basis bias correction,
 #'          \code{"bc2"} for least squares bias correction, and \code{"bc3"} for plug-in bias correction.
-#'          Default are \code{"bc3"} for splines and local polynomial partition series and \code{"bc2"}
+#'          Default are \code{"bc3"} for splines and piecewise polynomials and \code{"bc2"}
 #'          for wavelets.
-#'@param proj If true, projection of leading approximation error onto the lower-order approximating space
+#'@param proj If \code{TRUE}, projection of leading approximation error onto the lower-order approximation space
 #'            is included for bias correction (splines and piecewise polynomials only). Default is
 #'            \code{proj=TRUE}.
 #'@param bnknot A numeric vector of the same length as \code{ncol(x)}. Each element corresponds
@@ -57,16 +57,12 @@
 #'               are \code{"imse-rot"} for ROT implementation of IMSE-optimal number of knots and
 #'               \code{"imse-dpi"} for second generation of DPI implementation of IMSE-optimal number
 #'               of knots. Default is \code{kselect="imse-dpi"}.
-#'@param vce Procedure to compute the variance-covariance matrix estimator. Options are
+#'@param vce Procedure to compute the heteroskedasticity-consistent (HCk) variance-covariance matrix estimator with plug-in residuals. Options are
 #'           \itemize{
-#'           \item \code{"hc0"} heteroskedasticity-robust plug-in residuals variance estimator
-#'                              without weights.
-#'           \item \code{"hc1"} heteroskedasticity-robust plug-in residuals variance estimator
-#'                              with hc1 weights.
-#'           \item \code{"hc2"} heteroskedasticity-robust plug-in residuals variance estimator
-#'                              with hc2 weights. Default.
-#'           \item \code{"hc3"} heteroskedasticity-robust plug-in residuals variance estimator
-#'                              with hc3 weights.
+#'           \item \code{"hc0"} for unweighted residuals (HC0).
+#'           \item \code{"hc1"} for HC1 weights.
+#'           \item \code{"hc2"} for HC2 weights. Default.
+#'           \item \code{"hc3"} for HC3 weights.
 #'           }
 #'@param level Confidence level used for confidence intervals; default is \code{level=95}.
 #'@param uni.method Method used to implement uniform inference. Options are \code{"pl"} for
@@ -78,14 +74,15 @@
 #'@param uni.ngrid A numeric vector of the same length as \code{ncol(x)}. Each element corresponds to
 #'                 the number of grid points for each dimension used to implement uniform inference.
 #'                 Default is \code{uni.ngrid=50}.
-#'@param uni.out If true, the quantities used to implement uniform inference is outputted. Default is
+#'@param uni.out If \code{TRUE}, the quantities used to implement uniform inference is outputted. Default is
 #'               \code{uni.out=FALSE}.
-#'@param band If true, the critical value for constructing confidence band is calculated. Default
+#'@param band If \code{TRUE}, the critical value for constructing confidence band is calculated. Default
 #'            is \code{band=FALSE}. If \code{band=TRUE} with \code{uni.method} unspecified,
 #'            default is \code{uni.method="pl"}.
 #'@param B    Number of simulated samples used to obtain the critical value for confidence bands.
 #'            Default is \code{B=1000}.
 #'@param subset Optional rule specifying a subset of observations to be used.
+#'@param rotnorm If \code{TRUE}, ROT selection is adjusted using normal densities.
 #'@return \item{\code{Estimate}}{ A matrix containing eval (grid points), N (effective sample sizes),
 #'                             tau.cl (point estimates with a basis of order \code{m}), tau.bc (bias corrected point
 #'                             estimates with a basis of order \code{m.bc}), se.cl (standard error corresponding
@@ -98,19 +95,19 @@
 #'        \item{\code{uni.output}}{ A list containing quantities used to implement uniform inference.}
 #'        \item{\code{opt}}{ A list containing options passed to the function.}
 #'@author
-#' Matias D. Cattaneo, University of Michigan, Ann Arbor, MI. \email{cattaneo@umich.edu}.
+#' Matias D. Cattaneo, Princeton University, Princeton, NJ. \email{cattaneo@princeton.edu}.
 #'
 #' Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
 #'
-#' Yingjie Feng (maintainer), University of Michigan, Ann Arbor, MI. \email{yjfeng@umich.edu}.
+#' Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yjfeng@umich.edu}.
 #'
 #'@references
 #'
 #' Cattaneo, M. D., and M. H. Farrell (2013): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Optimal convergence rates, Bahadur representation, and asymptotic normality of partitioning estimators}. Journal of Econometrics 174(2): 127-143.
 #'
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018a): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Large Sample Properties of Partitioning-Based Series Estimators}. Working paper.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
 #'
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018b): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
 #'
 #' Cohen, A., I. Daubechies, and P.Vial (1993): Wavelets on the Interval and Fast Wavelet Transforms. Applied and Computational Harmonic Analysis 1(1): 54-81.
 #'
@@ -124,11 +121,11 @@
 #'
 #'@export
 
-# Version 0.2 Nov2018
+# Version 0.3 MAY2019
 lsprobust = function(y, x, eval=NULL, neval=NULL, method="bs", m=NULL, m.bc=NULL, deriv=NULL, smooth=NULL,
                      bsmooth=NULL, ktype="uni", knot=NULL, nknot=NULL, same = TRUE, bknot=NULL, bnknot=NULL,
                      J=NULL, bc="bc3", proj=TRUE, kselect="imse-dpi", vce="hc2", level=95, uni.method=NULL,
-                     uni.grid=NULL, uni.ngrid=50, uni.out=FALSE, band=FALSE, B=1000, subset=NULL) {
+                     uni.grid=NULL, uni.ngrid=50, uni.out=FALSE, band=FALSE, B=1000, subset=NULL, rotnorm=TRUE) {
 
   if (!is.null(m)) m <- m - 1
   q <- m.bc
@@ -382,19 +379,20 @@ lsprobust = function(y, x, eval=NULL, neval=NULL, method="bs", m=NULL, m.bc=NULL
     deriv <- rep(0, d)
     if (is.null(m)) m <- 1
     if (is.null(q)) q <- m + 1
-    if (bc != "bc1") bc <- "bc2"
+    if (bc == "bc3") bc <- "bc2"
   }
 
   if (method == "bs") {
     if (is.null(smooth)) {
       smooth <- m - 1
     } else {
-      if (smooth < m-1)   bc <- "bc2"
+      if (smooth < m-1)   proj <- TRUE
       if (m < smooth + 1) m <- smooth + 1
     }
     if (is.null(bsmooth)) {
        bsmooth <- q - 1
     } else {
+      if (bsmooth < q-1)   proj <- TRUE
       if (q < bsmooth + 1) q <- bsmooth + 1
     }
     smooth.p <- smooth
@@ -410,8 +408,8 @@ lsprobust = function(y, x, eval=NULL, neval=NULL, method="bs", m=NULL, m.bc=NULL
   if (method != "wav") {
     if (is.null(knot)) {
       if (is.null(nknot)) {
-         lsk <- lspkselect(y, x, m+1, q+1, deriv, method, ktype, kselect=kselect, proj=proj,
-                           bc=bc, vce=vce)
+         lsk <- lspkselect(y, x, m+1, q+1, smooth, bsmooth, deriv, method, ktype, kselect=kselect, proj=proj,
+                           bc=bc, vce=vce, rotnorm=rotnorm)
          nknot <- rep(lsk$ks[,1], d)
       }
       if (ktype == "uni") {
@@ -435,7 +433,8 @@ lsprobust = function(y, x, eval=NULL, neval=NULL, method="bs", m=NULL, m.bc=NULL
   } else {
     if (!is.null(nknot)) J <- pmax(ceiling(log2(nknot+1)), ceiling(log2(2*(m+2))))
     if (is.null(J)) {
-      J <- lspkselect(y, x, m+1, q+1, deriv, method, ktype, kselect=kselect, proj=proj, bc=bc, vce=vce)$ks[,1]
+      J <- lspkselect(y, x, m+1, q+1, smooth, bsmooth, deriv, method, ktype,
+                      kselect=kselect, proj=proj, bc=bc, vce=vce, rotnorm=rotnorm)$ks[,1]
       J <- pmax(ceiling(log2(rep(J, d))), ceiling(log2(2*(m+2))))
     }
     knot  <- genKnot.u(x.min, x.max, d, rep(2^J-1, d))

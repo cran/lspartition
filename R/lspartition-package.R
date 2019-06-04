@@ -1,18 +1,18 @@
 #'Nonparametric Estimation and Inference using Partitioning-Based Least Squares Regression
 #'@description This package provides tools for statistical analysis using B-splines, wavelets, and
-#'             piecewise polynomials (generalized regressogram) as described in
-#'             \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018a)}.
+#'             piecewise polynomials as described in
+#'             \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2019a)}:
 #'             \code{\link{lsprobust}} for least squares point estimation with robust bias-corrected pointwise and
-#'             uniform inference procedures. \code{\link{lspkselect}} for data-driven procedures
-#'             for selecting the IMSE-optimal number of partitioning knots. \code{\link{lsprobust.plot}}
-#'             for regression plots with robust confidence intervals and confidence bands.
+#'             uniform inference procedures; \code{\link{lspkselect}} for data-driven procedures
+#'             for selecting the IMSE-optimal number of partitioning knots; \code{\link{lsprobust.plot}}
+#'             for regression plots with robust confidence intervals and confidence bands;
 #'             \code{\link{lsplincom}} for estimation and inference for linear combination of regression
 #'             functions of different groups.
 #'
-#'             The companion software article, \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018b)},
-#'             provides further implementation details and empirical illustration.
+#'             The companion software article, \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2019b)},
+#'             provides further implementation details and empirical illustrations.
 #'
-#'@importFrom stats lm sd complete.cases quantile qnorm poly rbinom rnorm
+#'@importFrom stats lm sd complete.cases quantile qnorm poly rbinom rnorm dnorm integrate
 #'@importFrom matrixStats rowProds colProds colMaxs colMins rowMins rowMaxs
 #'@importFrom combinat xsimplex
 #'@importFrom splines splineDesign
@@ -24,15 +24,15 @@
 #'@import ggplot2
 #'@docType package
 #'@name lspartition-package
-#'@author Matias D. Cattaneo, University of Michigan, Ann Arbor, MI. \email{ cattaneo@umich.edu}.
+#'@author Matias D. Cattaneo, Princeton University, Princeton, NJ. \email{cattaneo@princeton.edu}.
 #'
 #'        Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
 #'
-#'        Yingjie Feng, University of Michigan, Ann Arbor, MI. \email{yjfeng@umich.edu}.
+#'        Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yjfeng@umich.edu}.
 #'
 #'@references
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018a): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Large Sample Properties of Partitioning-Based Series Estimators}. Working paper.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
 #'
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018b): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
 #'
 NULL

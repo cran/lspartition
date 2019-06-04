@@ -15,7 +15,7 @@ lsplincom(y, x, G, R, eval = NULL, neval = NULL, level = 95,
 \method{summary}{lsplincom}(object, ...)
 }
 \arguments{
-\item{y}{Outcome variable}
+\item{y}{Outcome variable.}
 
 \item{x}{Independent variable. A matrix or data frame.}
 
@@ -31,7 +31,7 @@ of \code{G}.}
 
 \item{level}{Confidence level used for confidence intervals; default is \code{level=95}.}
 
-\item{band}{If true, the critical value for constructing confidence band is calculated. Default
+\item{band}{If \code{TRUE}, the critical value for constructing confidence band is calculated. Default
 is \code{band=FALSE}.}
 
 \item{cb.method}{Method used to calculate the critical value for confidence bands.
@@ -70,10 +70,10 @@ corresponding knots according to the rule specified by \code{ktype}. See help fo
        \item{\code{opt}}{ A list containing options passed to the function.}
 }
 \description{
-\code{lsplincom} implements user-specified linear combinations across different data sub-groups for regression functions estimation, and computes corresponding (pointwise and uniform) robust bias-corrected inference procedures. Estimation and inference is implemented using the \pkg{lspartition} package.
-            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018a)} for more technical details and further references.
+\code{lsplincom} implements user-specified linear combinations across different data sub-groups for regression functions estimation, and computes corresponding (pointwise and uniform) robust bias-corrected inference measures. Estimation and inference is implemented using the \pkg{lspartition} package.
+            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2019a)} for complete details.
 
-            A detailed introduction to this command is given in \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018b)}.
+            A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2019b)}.
 
             For more details, and related Stata and R packages useful for empirical analysis,
             visit \url{https://sites.google.com/site/nppackages/}.
@@ -94,17 +94,17 @@ summary(est)
 
 }
 \references{
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018a): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Large Sample Properties of Partitioning-Based Series Estimators}. Working paper.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
 
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018b): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
 }
 \seealso{
 \code{\link{lsprobust}}, \code{\link{lspkselect}}, \code{\link{lsprobust.plot}},
 }
 \author{
-Matias D. Cattaneo, University of Michigan, Ann Arbor, MI. \email{cattaneo@umich.edu}.
+Matias D. Cattaneo, Princeton University, Princeton, NJ. \email{cattaneo@princeton.edu}.
 
 Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
 
-Yingjie Feng (maintainer), University of Michigan, Ann Arbor, MI. \email{yjfeng@umich.edu}.
+Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yjfeng@umich.edu}.
 }

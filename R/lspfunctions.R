@@ -1,3 +1,6 @@
+# lspartition supporting functions
+# version 0.3 May2019
+
 # Uniform knot list (including xmin and xmax as boundaries)
 genKnot.u <- function(x.min, x.max, d, n) {
   knot <- list()
@@ -273,46 +276,111 @@ qrXXinv <- function(x, ...) {
   return(inv)
 }
 
-# Generate ROT with global polynomials (for rot, deriv option not provided,
-# since rates are the same as levels)
-lspkselect.imse.rot <- function(y, x, m, method) {
+integrate.power <- function(d,exponents.vector) {
+  final.product <- 1
+  for (j in 1:d) {
+    final.product <- final.product*(integrate(function(x) x^exponents.vector[j],0,1)$value)
+  }
+  return(final.product)
+}
+
+# IMSE V constant for pp
+imse.vcons <- function(m, deriv) {
+  d <- length(deriv)
+  len <- choose(m+d, m)
+  if (all(deriv == 0)) {
+    vcons <- len
+  } else {
+    power.combos <- list()
+    for (l in 1:d) {
+      power.combos[[l]] <- c(0:m)
+    }
+    powers.list <- expand.grid(power.combos)
+    powers      <- as.matrix(powers.list[rowSums(powers.list)<=m,])
+    Omega <- Omega.deriv <- matrix(0, len, len)
+    for (i in 1:len) {
+      for (j in 1:len) {
+        Omega[i,j] <- integrate.power(d, powers[i,]+powers[j,])
+        if (all(powers[i,]-deriv>=0) & all(powers[j,]-deriv>=0)) {
+          Omega.deriv[i,j] <- integrate.power(d, powers[i,]+powers[j,]-2*deriv) *
+                              prod(factorial(powers[i,])/factorial(powers[i,]-deriv)) *
+                              prod(factorial(powers[j,])/factorial(powers[j,]-deriv))
+        }
+      }
+    }
+    vcons <- sum(diag(solve(Omega, Omega.deriv)))
+  }
+  return(vcons)
+}
+
+# Generate ROT with global polynomials
+# (for pp, ROT is based on a general formula for any deriv; for bs, ROT is based on a formula for deriv=0)
+lspkselect.imse.rot <- function(y, x, m, method, rotnorm, ktype, deriv) {
   N <- nrow(x); d <- ncol(x)
   x.max <- colMaxs(x); x.min <- colMins(x)
   x <- scale(x, center=x.min, scale=x.max-x.min)
+  es <- F
+  if (ktype == "uni") es <- T
 
-  p   <- m + 4
-  ind <- genIndex(m, d, method)
+  delta <- 2
+  p   <- m + delta
   x.p <- gpoly(x, p, rep(0, d))
   est <- lm(y ~ x.p - 1)
   beta <- est$coefficients; est <- est$fitted.values
   coef.ind <- which(!is.na(beta))
 
-  #bias constant
-  imse.b <- 0
-  if (method == "bs") {
-    cons.B <- abs(bernoulli(2*m+2, 0)) / factorial(2*m+2)
-  } else if (method == "wav") {
-    cons.B <- 1/factorial(m+1)^2 * filelist$cwav[m]
-  } else {
-    cons.B <-c()
-  }
-  if (method == "pp") {
-    for (j in 1:nrow(ind)) {
-      cons.B <- prod(1 / (2*ind[j,] + 1) / factorial(ind[j,])^2 / choose(2*ind[j,], ind[j,])^2)
-      imse.b <- imse.b + cons.B * mean((gpoly(x, p, ind[j,])[,coef.ind, drop=F] %*% beta[coef.ind])^2)
-    }
-  } else {
-    for (j in 1:nrow(ind)) {
-      imse.b <- imse.b + cons.B * mean((gpoly(x, p, ind[j,])[,coef.ind, drop=F] %*% beta[coef.ind])^2)
-    }
-  }
-
   # variance constant
-  s2 <- mean(lm(y^2 ~ x.p - 1)$fitted.values - est^2)
+  # density adjustment is based on formula for pp
+  s2 <- lm(y^2 ~ x.p - 1)$fitted.values - est^2
+  f.v <- f.b <- 1; dens <- c()
+  if (rotnorm) {
+    xmean <- colMeans(x); xsd <- apply(x, 2, sd)
+    for (j in 1:d) {
+      f.tmp <- dnorm(x[,j], xmean[j], xsd[j])
+      # trim density from below
+      cutval <- dnorm(qnorm(0.975)*xsd[j], 0, xsd[j])
+      f.tmp[f.tmp < cutval] <- cutval
+      dens <- cbind(dens, f.tmp)
+      if (es) {
+        f.v <- f.v / f.tmp
+      } else {
+        if (method=="pp") f.v <- f.v * (f.tmp^(2*deriv[j]))
+      }
+    }
+  }
+  s2 <- mean(s2 * f.v)
 
-  if (method == "pp")  cons.V <- choose(m+d, m)
+  if (method == "pp")  cons.V <- imse.vcons(m, deriv)
   else                 cons.V <- 1
   imse.v <- cons.V * s2
+
+  # bias constant
+  ind <- genIndex(m, d, method)
+  index <- which(rowSums(sweep(ind, 2, deriv) >= 0) == d)
+
+  imse.b <- 0
+  if (length(index)!=0) {
+    if (method == "bs") {
+      cons.B <- abs(bernoulli(2*m+2, 0)) / factorial(2*m+2)
+    } else if (method == "wav") {
+      cons.B <- 1/factorial(m+1)^2 * filelist$cwav[m]
+    } else {
+      cons.B <-c()
+    }
+
+    if (method == "pp") {
+      for (j in index) {
+        if (es & rotnorm) f.b <- rowProds(sweep(dens, 2, ind[j,]-deriv, FUN="^"))
+        cons.B <- prod(1 / (2*(ind[j,]-deriv) + 1) / factorial(ind[j,]-deriv)^2 / choose(2*(ind[j,]-deriv), ind[j,]-deriv)^2)
+        imse.b <- imse.b + cons.B * mean((gpoly(x, p, ind[j,])[,coef.ind, drop=F] %*% beta[coef.ind] / f.b)^2)
+      }
+    } else {
+      for (j in index) {
+        if (es & rotnorm) f.b <- rowProds(sweep(dens, 2, ind[j,], FUN="^"))
+        imse.b <- imse.b + cons.B * mean((gpoly(x, p, ind[j,])[,coef.ind, drop=F] %*% beta[coef.ind] / f.b)^2)
+      }
+    }
+  }
 
   k.rot <- ceiling((imse.b*2*(m+1)/(d*imse.v))^(1/(2*m+2+d)) * N^(1/(2*m+2+d)))
 
@@ -326,7 +394,7 @@ getBeta <- function(y, x, method, m, smooth, knot, d) {
   return(beta)
 }
 
-genB <- function(y, x, d, method, m, deriv, knot, proj) {
+genB <- function(y, x, d, method, m, deriv, knot, proj, smooth) {
   pos <- locate.x(x, d, knot)
   B <- 0
   if (method == "bs") {
@@ -346,8 +414,8 @@ genB <- function(y, x, d, method, m, deriv, knot, proj) {
         bias.0 <- bias.0 + bernoulli(m+1, (x[,j] - pos$tx[,j]) / pos$hx[,j]) * pos$hx[,j]^(m+1) / factorial(m+1) *
                   genDesign(x, method="bs", m=m+1, J=NULL, smooth=m, knot=knot, deriv=index.m[j,]) %*% beta
       }
-      beta <- getBeta(bias.0, x, method="bs", m=m, smooth=m-1, knot=knot, d=d)
-      B <- B - genDesign(x, method="bs", m=m, J=NULL, smooth=m-1, knot=knot, deriv=deriv) %*% beta
+      beta <- getBeta(bias.0, x, method="bs", m=m, smooth=smooth, knot=knot, d=d)
+      B <- B - genDesign(x, method="bs", m=m, J=NULL, smooth=smooth, knot=knot, deriv=deriv) %*% beta
     }
   } else if (method == "pp") {
     index.m <- t(xsimplex(d, m+1))
@@ -377,10 +445,10 @@ genB <- function(y, x, d, method, m, deriv, knot, proj) {
   return(B)
 }
 
-genV <- function(y, x, d, method, m, J, knot, deriv, vce) {
-  P <- genDesign(x, method, m, J, smooth=m-1, knot, rep(0, d))
+genV <- function(y, x, d, method, m, J, knot, deriv, vce, smooth) {
+  P <- genDesign(x, method, m, J, smooth=smooth, knot, rep(0, d))
   invG.p <- qrXXinv(P)
-  basis.p <- genDesign(x, method, m, J, smooth=m-1, knot, deriv)
+  basis.p <- genDesign(x, method, m, J, smooth=smooth, knot, deriv)
   hii.p <- rowSums((P %*% invG.p) * P); hii.p[hii.p >= 0.9] <- 0.9
   hii.p[hii.p < 0] <- 0; d.p <- ncol(P)
   predict.p <- P %*% invG.p %*% crossprod(P, y)
@@ -390,8 +458,8 @@ genV <- function(y, x, d, method, m, J, knot, deriv, vce) {
 }
 
 # DPI selector
-lspkselect.imse.dpi <- function(y, x, m, method, ktype, vce, deriv, proj) {
-  k.rot <- lspkselect.imse.rot(y, x, m, method)
+lspkselect.imse.dpi <- function(y, x, m, method, ktype, vce, deriv, proj, smooth, rotnorm) {
+  k.rot <- lspkselect.imse.rot(y, x, m, method, rotnorm, ktype, deriv)
   N <- nrow(x); d <- ncol(x); q <- sum(deriv)
   x.max <- colMaxs(x); x.min <- colMins(x)
   x <- scale(x, center=x.min, scale=x.max-x.min)
@@ -419,11 +487,11 @@ lspkselect.imse.dpi <- function(y, x, m, method, ktype, vce, deriv, proj) {
     }
     imse.b <- imse.b / factorial(m+1)^2 * filelist$cwav[m]
   } else {
-    imse.b <- genB(y, x, d, method, m, deriv, knot, proj) * (k.rot+1)^(2*(m-q+1))
+    imse.b <- genB(y, x, d, method, m, deriv, knot, proj, smooth=smooth) * (k.rot+1)^(2*(m-q+1))
   }
 
   # variance constant
-  imse.v <- mean((genV(y, x, d, method, m, J, knot, deriv, vce))^2) * N * (k.rot+1)^((-d-2*q)/d)
+  imse.v <- mean((genV(y, x, d, method, m, J, knot, deriv, vce, smooth=smooth))^2) * N * (k.rot+1)^((-d-2*q)/d)
 
   k.dpi <- ceiling((imse.b*2*(m-q+1)/((d+2*q)*imse.v))^(1/(2*m+2+d)) * N^(1/(2*m+2+d)))
 

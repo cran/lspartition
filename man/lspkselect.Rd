@@ -6,9 +6,10 @@
 \alias{summary.lspkselect}
 \title{Tuning Parameter Selection Procedures for Partitioning-Based Regression Estimation and Inference}
 \usage{
-lspkselect(y, x, m = NULL, m.bc = NULL, deriv = NULL, method = "bs",
-  ktype = "uni", kselect = "imse-dpi", proj = TRUE, bc = "bc3",
-  vce = "hc2", subset = NULL)
+lspkselect(y, x, m = NULL, m.bc = NULL, smooth = NULL,
+  bsmooth = NULL, deriv = NULL, method = "bs", ktype = "uni",
+  kselect = "imse-dpi", proj = TRUE, bc = "bc3", vce = "hc2",
+  subset = NULL, rotnorm = TRUE)
 
 \method{print}{lspkselect}(x, ...)
 
@@ -23,63 +24,66 @@ lspkselect(y, x, m = NULL, m.bc = NULL, deriv = NULL, method = "bs",
 
 \item{m.bc}{Order of basis used to estimate leading bias. Default is \code{m.bc=m+1}.}
 
+\item{smooth}{Smoothness of B-splines for point estimation. When \code{smooth=s}, B-splines have \code{s}-order
+continuous derivatives. Default is \code{smooth=m-2}.}
+
+\item{bsmooth}{Smoothness of B-splines for bias correction. Default is \code{bsmooth=m.bc-2}.}
+
 \item{deriv}{Derivative order of the regression function to be estimated. A vector object of the same
 length as \code{ncol(x)}. Default is \code{deriv=c(0,...,0)}.}
 
 \item{method}{Type of basis used for expansion. Options are \code{"bs"} for B-splines,
-\code{"wav"} for compact-supported wavelets (Cohen, Daubechies and Vial, 1993),
+\code{"wav"} for compactly supported wavelets (Cohen, Daubechies and Vial, 1993),
 and \code{"pp"} for piecewise polynomials. Default is \code{method="bs"}.}
 
 \item{ktype}{Knot placement. Options are \code{"uni"} for evenly spaced knots over the
 support of \code{x} and \code{"qua"} for quantile-spaced knots. Default is \code{ktype="uni"}.}
 
 \item{kselect}{Method for selecting the number of inner knots used by \code{lspkselect}. Options
-are \code{"imse-rot"} for ROT implementation of IMSE-optimal number of knots,
-\code{"imse-dpi"} for second generation of DPI implementation of IMSE-optimal number
+are \code{"imse-rot"} for a rule-of-thumb (ROT) implementation of IMSE-optimal number of knots,
+\code{"imse-dpi"} for second generation direct plug-in (DPI) implementation of IMSE-optimal number
 of knots, and \code{"all"} for both. Default is \code{kselect="imse-dpi"}.}
 
-\item{proj}{If true, projection of leading approximation error onto the lower-order approximating space
+\item{proj}{If \code{TRUE}, projection of leading approximation error onto the lower-order approximating space
 is included for bias correction (splines and piecewise polynomial only). Default is \code{proj=TRUE}.}
 
-\item{bc}{Bias correction method. Options are \code{"bc1"} for higher-order bias correction,
+\item{bc}{Bias correction method. Options are \code{"bc1"} for higher-order-basis bias correction,
 \code{"bc2"} for least squares bias correction, and \code{"bc3"} for plug-in bias correction.
-Default are \code{"bc3"} for splines and local polynomial partition series and \code{"bc2"}
+Defaults are \code{"bc3"} for splines and piecewise polynomials and \code{"bc2"}
 for wavelets.}
 
-\item{vce}{Procedure to compute the variance-covariance matrix estimator. Options are
+\item{vce}{Procedure to compute the heteroskedasticity-consistent (HCk) variance-covariance matrix estimator with plug-in residuals. Options are
 \itemize{
-\item \code{"hc0"} heteroskedasticity-robust plug-in residuals variance estimator
-                 without weights.
-\item \code{"hc1"} heteroskedasticity-robust plug-in residuals variance estimator
-                 with hc1 weights.
-\item \code{"hc2"} heteroskedasticity-robust plug-in residuals variance estimator
-                 with hc2 weights. Default.
-\item \code{"hc3"} heteroskedasticity-robust plug-in residuals variance estimator
-                 with hc3 weights.
+\item \code{"hc0"} for unweighted residuals (HC0).
+\item \code{"hc1"} for HC1 weights.
+\item \code{"hc2"} for HC2 weights. Default.
+\item \code{"hc3"} for HC3 weights.
 }}
 
 \item{subset}{Optional rule specifying a subset of observations to be used.}
+
+\item{rotnorm}{If \code{TRUE}, ROT selection is adjusted using normal densities.}
 
 \item{...}{further arguments}
 
 \item{object}{class \code{lspkselect} objects.}
 }
 \value{
-\item{\code{ks}}{A matrix may contain \code{k.rot}(IMSE-optimal number of knots for
+\item{\code{ks}}{A matrix may contain \code{k.rot} (IMSE-optimal number of knots for
                         the main regression through ROT implementation), \code{k.bias.rot}
                         (IMSE-optimal number of knots for bias correction through ROT
-                        implementation), \code{k.dpi}{IMSE-optimal number of knots for the
-                        main regression through DPI implementation}, \code{k.bias.dpi}(IMSE-optimal
+                        implementation), \code{k.dpi} (IMSE-optimal number of knots for the
+                        main regression through DPI implementation), \code{k.bias.dpi} (IMSE-optimal
                         number of knots for bias correction through DPI implementation)}
        \item{\code{opt}}{A list containing options passed to the function.}
 }
 \description{
-\code{lspkselect} implements IMSE-optimal data-driven procedures to select the number of partitioning knots for partitioning-based least squares regression estimators. Three series methods are supported: B-splines, compact supported wavelets, and piecewise polynomials (generalized regressograms).
-            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018a)} for more technical details and further references.
+\code{lspkselect} implements data-driven procedures to select the Integrated Mean Squared Error (IMSE) optimal number of partitioning knots for partitioning-based least squares regression estimators. Three series methods are supported: B-splines, compactly supported wavelets, and piecewise polynomials.
+            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2019a)} for complete details.
 
-            Companion command: \code{\link{lsprobust}} for partitioning-based least squares regression estimation and inference; \code{\link{lsprobust.plot}} for plotting results; \code{\link{lsplincom}} for multiple sample estimation and inference.
+            Companion commands: \code{\link{lsprobust}} for partitioning-based least squares regression estimation and inference; \code{\link{lsprobust.plot}} for plotting results; \code{\link{lsplincom}} for multiple sample estimation and inference.
 
-            A detailed introduction to this command is given in \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018b)}.
+            A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2019b)}.
 
             For more details, and related Stata and R packages useful for empirical analysis,
             visit \url{https://sites.google.com/site/nppackages/}.
@@ -101,9 +105,9 @@ summary(est)
 \references{
 Cattaneo, M. D., and M. H. Farrell (2013): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Optimal convergence rates, Bahadur representation, and asymptotic normality of partitioning estimators}. Journal of Econometrics 174(2): 127-143.
 
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018a): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Large Sample Properties of Partitioning-Based Series Estimators}. Working paper.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
 
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018b): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
 
 Cohen, A., I. Daubechies, and P.Vial (1993): Wavelets on the Interval and Fast Wavelet Transforms. Applied and Computational Harmonic Analysis 1(1): 54-81.
 }
@@ -111,9 +115,9 @@ Cohen, A., I. Daubechies, and P.Vial (1993): Wavelets on the Interval and Fast W
 \code{\link{lsprobust}}, \code{\link{lsprobust.plot}}, \code{\link{lsplincom}}
 }
 \author{
-Matias D. Cattaneo, University of Michigan, Ann Arbor, MI. \email{cattaneo@umich.edu}.
+Matias D. Cattaneo, Princeton University, Princeton, NJ. \email{cattaneo@princeton.edu}.
 
 Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
 
-Yingjie Feng (maintainer), University of Michigan, Ann Arbor, MI. \email{yjfeng@umich.edu}.
+Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yjfeng@umich.edu}.
 }

@@ -1,12 +1,12 @@
 #'Graphic Presentation of Results for \pkg{lspartition} Package
 #'
 #'@description \code{lsprobust.plot} plots estimated regression functions and confidence regions using the \pkg{lspartition} package.
-#'             See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018a)} for more technical details and further references.
+#'             See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2019a)} for complete details.
 #'
 #'             Companion command: \code{\link{lsprobust}} for partitioning-based least squares regression
 #'             estimation and inference; \code{\link{lsprobust.plot}} for plotting results; \code{\link{lsplincom}} for multiple sample estimation and inference.
 #'
-#'             A detailed introduction to this command is given in \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018b)}.
+#'             A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2019b)}.
 #'
 #'             For more details, and related Stata and R packages useful for empirical analysis,
 #'             visit \url{https://sites.google.com/site/nppackages/}.
@@ -26,7 +26,7 @@
 #'              be plotted. If more than one is provided, they will be applied to data series accordingly.
 #'              If \code{CS = "all"}, pointwise confidence intervals are forced to be represented by error bars,
 #'              and uniform bands are represented by both lines and regions.
-#'@param title Strings, title of the plot.
+#'@param title String, title of the plot.
 #'@param xlabel Strings, labels for x-axis.
 #'@param ylabel Strings, labels for y-axis.
 #'@param lty Line type for point estimates, only effective if \code{type} is \code{"line"} or
@@ -63,7 +63,7 @@
 #'             \code{\link{ggplot2}} or \code{\link{par}}. If more than one is provided,
 #'             they will be applied to data series accordingly.
 #'@param legendTitle String, title of legend.
-#'@param legendGroups String Vector, group names used in legend.
+#'@param legendGroups String vector, group names used in legend.
 #'
 #'@details Companion command: \code{\link{lsprobust}} for partition-based least-squares regression
 #'         estimation.
@@ -72,19 +72,19 @@
 #'        customization.
 #'
 #'@author
-#' Matias D. Cattaneo, University of Michigan, Ann Arbor, MI. \email{cattaneo@umich.edu}.
+#' Matias D. Cattaneo, Princeton University, Princeton, NJ. \email{cattaneo@princeton.edu}.
 #'
 #' Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
 #'
-#' Yingjie Feng (maintainer), University of Michigan, Ann Arbor, MI. \email{yjfeng@umich.edu}.
+#' Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yjfeng@umich.edu}.
 #'
 #'@seealso \code{\link{lsprobust}}, \code{\link{lspkselect}}, \code{\link{lsplincom}}, \code{\link{ggplot2}}.
 #'
 #'@references
 #'
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018a): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Large Sample Properties of Partitioning-Based Series Estimators}. Working paper.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
 #'
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018b): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
 #'
 #'@examples
 #'x   <- runif(500)
@@ -94,6 +94,7 @@
 #'
 #'@export
 
+# version 0.3 May2019
 lsprobust.plot <- function(..., alpha=NULL, type=NULL, CS="ci", CStype=NULL,
                           title="", xlabel="", ylabel="",
                           lty=NULL, lwd=NULL, lcol=NULL, pty=NULL, pwd=NULL, pcol=NULL,

@@ -8,18 +8,18 @@
 \usage{
 lsprobust(y, x, eval = NULL, neval = NULL, method = "bs", m = NULL,
   m.bc = NULL, deriv = NULL, smooth = NULL, bsmooth = NULL,
-  ktype = "uni", knot = NULL, nknot = NULL, same = TRUE, bknot = NULL,
-  bnknot = NULL, J = NULL, bc = "bc3", proj = TRUE,
+  ktype = "uni", knot = NULL, nknot = NULL, same = TRUE,
+  bknot = NULL, bnknot = NULL, J = NULL, bc = "bc3", proj = TRUE,
   kselect = "imse-dpi", vce = "hc2", level = 95, uni.method = NULL,
   uni.grid = NULL, uni.ngrid = 50, uni.out = FALSE, band = FALSE,
-  B = 1000, subset = NULL)
+  B = 1000, subset = NULL, rotnorm = TRUE)
 
 \method{print}{lsprobust}(x, ...)
 
 \method{summary}{lsprobust}(object, ...)
 }
 \arguments{
-\item{y}{Outcome variable}
+\item{y}{Outcome variable.}
 
 \item{x}{Independent variable. A matrix or data frame.}
 
@@ -28,8 +28,8 @@ lsprobust(y, x, eval = NULL, neval = NULL, method = "bs", m = NULL,
 \item{neval}{Number of quantile-spaced evaluating points.}
 
 \item{method}{Type of basis used for expansion. Options are \code{"bs"} for B-splines,
-\code{"wav"} for compact-supported wavelets (Cohen, Daubechies and Vial, 1993),
-and \code{"pp"} for piecewise polynomials. Default is \code{method = "bs"}.}
+\code{"wav"} for compactly supported wavelets (Cohen, Daubechies and Vial, 1993),
+and \code{"pp"} for piecewise polynomials. Default is \code{method="bs"}.}
 
 \item{m}{Order of basis used in the main regression. Default is \code{m=2}. For B-splines,
 if \code{smooth} is specified but \code{m} is unspecified, default is \code{m=smooth+2}.}
@@ -58,7 +58,7 @@ corresponding knots according to the rule specified by \code{ktype}.}
 the number of \emph{inner} partitioning knots for each dimension used in the main regression.
 If not specified, \code{nknot} is computed by the companion command \code{lspkselect}.}
 
-\item{same}{If TRUE, the same knots are used for bias correction as that in the
+\item{same}{If \code{TRUE}, the same knots are used for bias correction as that for the
 main regression. Default is \code{same=TRUE}.}
 
 \item{bknot}{A list of numeric vectors giving knot positions used for bias correction. If not
@@ -72,12 +72,12 @@ correction. If not specified, \code{bnknot} is computed by the companion command
 
 \item{J}{A numeric vector containing resolution levels of father wavelets for each dimension.}
 
-\item{bc}{Bias correction method. Options are \code{"bc1"} for higher-order bias correction,
+\item{bc}{Bias correction method. Options are \code{"bc1"} for higher-order-basis bias correction,
 \code{"bc2"} for least squares bias correction, and \code{"bc3"} for plug-in bias correction.
-Default are \code{"bc3"} for splines and local polynomial partition series and \code{"bc2"}
+Default are \code{"bc3"} for splines and piecewise polynomials and \code{"bc2"}
 for wavelets.}
 
-\item{proj}{If true, projection of leading approximation error onto the lower-order approximating space
+\item{proj}{If \code{TRUE}, projection of leading approximation error onto the lower-order approximation space
 is included for bias correction (splines and piecewise polynomials only). Default is
 \code{proj=TRUE}.}
 
@@ -86,16 +86,12 @@ are \code{"imse-rot"} for ROT implementation of IMSE-optimal number of knots and
 \code{"imse-dpi"} for second generation of DPI implementation of IMSE-optimal number
 of knots. Default is \code{kselect="imse-dpi"}.}
 
-\item{vce}{Procedure to compute the variance-covariance matrix estimator. Options are
+\item{vce}{Procedure to compute the heteroskedasticity-consistent (HCk) variance-covariance matrix estimator with plug-in residuals. Options are
 \itemize{
-\item \code{"hc0"} heteroskedasticity-robust plug-in residuals variance estimator
-                   without weights.
-\item \code{"hc1"} heteroskedasticity-robust plug-in residuals variance estimator
-                   with hc1 weights.
-\item \code{"hc2"} heteroskedasticity-robust plug-in residuals variance estimator
-                   with hc2 weights. Default.
-\item \code{"hc3"} heteroskedasticity-robust plug-in residuals variance estimator
-                   with hc3 weights.
+\item \code{"hc0"} for unweighted residuals (HC0).
+\item \code{"hc1"} for HC1 weights.
+\item \code{"hc2"} for HC2 weights. Default.
+\item \code{"hc3"} for HC3 weights.
 }}
 
 \item{level}{Confidence level used for confidence intervals; default is \code{level=95}.}
@@ -112,10 +108,10 @@ correponds to the coordinates of one grid point.}
 the number of grid points for each dimension used to implement uniform inference.
 Default is \code{uni.ngrid=50}.}
 
-\item{uni.out}{If true, the quantities used to implement uniform inference is outputted. Default is
+\item{uni.out}{If \code{TRUE}, the quantities used to implement uniform inference is outputted. Default is
 \code{uni.out=FALSE}.}
 
-\item{band}{If true, the critical value for constructing confidence band is calculated. Default
+\item{band}{If \code{TRUE}, the critical value for constructing confidence band is calculated. Default
 is \code{band=FALSE}. If \code{band=TRUE} with \code{uni.method} unspecified,
 default is \code{uni.method="pl"}.}
 
@@ -123,6 +119,8 @@ default is \code{uni.method="pl"}.}
 Default is \code{B=1000}.}
 
 \item{subset}{Optional rule specifying a subset of observations to be used.}
+
+\item{rotnorm}{If \code{TRUE}, ROT selection is adjusted using normal densities.}
 
 \item{...}{further arguments}
 
@@ -142,12 +140,12 @@ Default is \code{B=1000}.}
        \item{\code{opt}}{ A list containing options passed to the function.}
 }
 \description{
-\code{lsprobust} implements partitioning-based least squares point estimators for the regression function and derivatives thereof. It also provides robust bias-corrected (pointwise and uniform) inference, including simulation-based confidence bands. Three series methods are supported: B-splines, compact supported wavelets, and piecewise polynomials (generalized regressograms).
-            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018a)} for more technical details and further references.
+\code{lsprobust} implements partitioning-based least squares point estimators for the regression function and its derivatives. It also provides robust bias-corrected (pointwise and uniform) inference, including simulation-based confidence bands. Three series methods are supported: B-splines, compact supported wavelets, and piecewise polynomials.
+            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2019a)} for complete details.
 
             Companion commands: \code{\link{lspkselect}} for data-driven IMSE-optimal selection of the number of knots on rectangular partitions; \code{\link{lsprobust.plot}} for plotting results; \code{\link{lsplincom}} for multiple sample estimation and inference.
 
-            A detailed introduction to this command is given in \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{Cattaneo, Farrell and Feng (2018b)}.
+            A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2019b)}.
 
             For more details, and related Stata and R packages useful for empirical analysis,
             visit \url{https://sites.google.com/site/nppackages/}.
@@ -169,9 +167,9 @@ summary(est)
 \references{
 Cattaneo, M. D., and M. H. Farrell (2013): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Optimal convergence rates, Bahadur representation, and asymptotic normality of partitioning estimators}. Journal of Econometrics 174(2): 127-143.
 
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018a): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_Partitioning.pdf?attredirects=0}{Large Sample Properties of Partitioning-Based Series Estimators}. Working paper.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
 
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2018b): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell-Feng_2018_lspartition.pdf?attredirects=0}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
 
 Cohen, A., I. Daubechies, and P.Vial (1993): Wavelets on the Interval and Fast Wavelet Transforms. Applied and Computational Harmonic Analysis 1(1): 54-81.
 }
@@ -179,9 +177,9 @@ Cohen, A., I. Daubechies, and P.Vial (1993): Wavelets on the Interval and Fast W
 \code{\link{lspkselect}}, \code{\link{lsprobust.plot}}, \code{\link{lsplincom}}
 }
 \author{
-Matias D. Cattaneo, University of Michigan, Ann Arbor, MI. \email{cattaneo@umich.edu}.
+Matias D. Cattaneo, Princeton University, Princeton, NJ. \email{cattaneo@princeton.edu}.
 
 Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
 
-Yingjie Feng (maintainer), University of Michigan, Ann Arbor, MI. \email{yjfeng@umich.edu}.
+Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yjfeng@umich.edu}.
 }
