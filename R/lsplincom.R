@@ -48,13 +48,13 @@
 #'
 #' Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
 #'
-#' Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yjfeng@umich.edu}.
+#' Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yingjief@princeton.edu}.
 #'
 #'@references
 #'
 #' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
 #'
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. R Journal, forthcoming. arXiv:1906.00202.
 #'
 #'@seealso \code{\link{lsprobust}}, \code{\link{lspkselect}}, \code{\link{lsprobust.plot}},
 #'
@@ -68,7 +68,7 @@
 #'@export
 
 
-# version 0.3 May2019
+# version 0.4 Aug2019
 lsplincom <- function(y, x, G, R, eval=NULL, neval=NULL, level=95, band=FALSE, cb.method=NULL,
                       cb.grid=NULL, cb.ngrid=50, B=1000, subset=NULL, knot=NULL, ...) {
 

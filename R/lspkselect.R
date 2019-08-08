@@ -55,7 +55,7 @@
 #'
 #' Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
 #'
-#' Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yjfeng@umich.edu}.
+#' Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yingjief@princeton.edu}.
 #'
 #'@references
 #'
@@ -63,7 +63,7 @@
 #'
 #' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
 #'
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. Working paper.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. R Journal, forthcoming. arXiv:1906.00202.
 #'
 #' Cohen, A., I. Daubechies, and P.Vial (1993): Wavelets on the Interval and Fast Wavelet Transforms. Applied and Computational Harmonic Analysis 1(1): 54-81.
 #'
@@ -77,7 +77,7 @@
 #'
 #'@export
 #'
-# version 0.3 May2019
+# version 0.4 Aug2019
 lspkselect = function(y, x, m=NULL, m.bc=NULL, smooth=NULL, bsmooth=NULL, deriv=NULL, method="bs", ktype="uni",
                       kselect="imse-dpi", proj = TRUE, bc="bc3", vce="hc2", subset=NULL, rotnorm=TRUE) {
 

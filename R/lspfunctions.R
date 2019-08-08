@@ -1,5 +1,5 @@
 # lspartition supporting functions
-# version 0.3 May2019
+# version 0.4 Aug2019
 
 # Uniform knot list (including xmin and xmax as boundaries)
 genKnot.u <- function(x.min, x.max, d, n) {
