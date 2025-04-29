@@ -1,5 +1,5 @@
 # lspartition supporting functions
-# version 0.4 Aug2019
+# version 0.5 Apr2025
 
 # Uniform knot list (including xmin and xmax as boundaries)
 genKnot.u <- function(x.min, x.max, d, n) {
@@ -47,8 +47,8 @@ locate.x <- function(eval, d, knot) {
 }
 
 #Check n of eval
-duplicates.drop <- function(data, names) {
-  data <- dplyr::distinct(data, names, .keep_all = T)
+duplicates.drop <- function(data, colnum) {
+  data <- dplyr::distinct(data, dplyr::across(dplyr::all_of(names(data)[colnum])), .keep_all = T)
   return(data)
 }
 
@@ -59,7 +59,7 @@ gen.eN <- function(eval, x, d, knot) {
   range <- as.data.frame(cbind(1:neval, range[do.call(order, as.list(as.data.frame(range[,2:(d+1), drop=F]))),]))
   #range <- c(list(range), lapply(as.list(names(range[,3:(d+2)])), as.name), list(.keep_all=T))
   #uniq  <- do.call(distinct, range)
-  uniq <- duplicates.drop(range, lapply(as.list(names(range[,3:(d+2)])), as.name))
+  uniq <- duplicates.drop(range, 3:(d+2))
   count <- c(diff(uniq[,1]),  neval-uniq[nrow(uniq), 1]+1)
   eN.1 <- apply(uniq[, 3:(d+2), drop=F], 1, function(z) rowSums(sweep(x, 2, z) >= 0))
   eN.2 <- apply(uniq[, -(1:(d+2)), drop=F], 1, function(z) rowSums(sweep(x, 2, z) <= 0))

@@ -71,20 +71,20 @@ corresponding knots according to the rule specified by \code{ktype}. See help fo
 }
 \description{
 \code{lsplincom} implements user-specified linear combinations across different data sub-groups for regression functions estimation, and computes corresponding (pointwise and uniform) robust bias-corrected inference measures. Estimation and inference is implemented using the \pkg{lspartition} package.
-            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2019a)} for complete details.
+            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2020a)} for complete details.
 
-            A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2019b)}.
+            A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2020b)}.
 
             For more details, and related Stata and R packages useful for empirical analysis,
             visit \url{https://sites.google.com/site/nppackages/}.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{print}: \code{print} method for class "\code{lsplincom}".
+\item \code{print(lsplincom)}: \code{print} method for class "\code{lsplincom}".
 
-\item \code{summary}: \code{summary} method for class "\code{lsplincom}"
+\item \code{summary(lsplincom)}: \code{summary} method for class "\code{lsplincom}"
+
 }}
-
 \examples{
 x   <- runif(500)
 y   <- sin(4*x)+rnorm(500)
@@ -94,9 +94,9 @@ summary(est)
 
 }
 \references{
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2020a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, 48(3): 1718-1741, 2020.
 
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. R Journal, forthcoming. arXiv:1906.00202.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2020b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. R Journal, 12(1): 172-187, 2020.
 }
 \seealso{
 \code{\link{lsprobust}}, \code{\link{lspkselect}}, \code{\link{lsprobust.plot}},
@@ -104,7 +104,7 @@ Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs
 \author{
 Matias D. Cattaneo, Princeton University, Princeton, NJ. \email{cattaneo@princeton.edu}.
 
-Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
+Max H. Farrell, University of California, Santa Barbara, CA. \email{maxhfarrell@ucsb.edu}.
 
-Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yingjief@princeton.edu}.
+Yingjie Feng (maintainer), Tsinghua University, Beijing, China. \email{fengyingjiepku@gmail.com}.
 }

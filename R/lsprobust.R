@@ -1,11 +1,11 @@
 #'Partitioning-Based Least Squares Regression with Robust Inference.
 #'
 #'@description \code{lsprobust} implements partitioning-based least squares point estimators for the regression function and its derivatives. It also provides robust bias-corrected (pointwise and uniform) inference, including simulation-based confidence bands. Three series methods are supported: B-splines, compact supported wavelets, and piecewise polynomials.
-#'             See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2019a)} for complete details.
+#'             See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2020a)} for complete details.
 #'
 #'             Companion commands: \code{\link{lspkselect}} for data-driven IMSE-optimal selection of the number of knots on rectangular partitions; \code{\link{lsprobust.plot}} for plotting results; \code{\link{lsplincom}} for multiple sample estimation and inference.
 #'
-#'             A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2019b)}.
+#'             A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2020b)}.
 #'
 #'             For more details, and related Stata and R packages useful for empirical analysis,
 #'             visit \url{https://sites.google.com/site/nppackages/}.
@@ -97,17 +97,17 @@
 #'@author
 #' Matias D. Cattaneo, Princeton University, Princeton, NJ. \email{cattaneo@princeton.edu}.
 #'
-#' Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
+#' Max H. Farrell, University of California, Santa Barbara, CA. \email{maxhfarrell@ucsb.edu}.
 #'
-#' Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yingjief@princeton.edu}.
+#' Yingjie Feng (maintainer), Tsinghua University, Beijing, China. \email{fengyingjiepku@gmail.com}.
 #'
 #'@references
 #'
 #' Cattaneo, M. D., and M. H. Farrell (2013): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Optimal convergence rates, Bahadur representation, and asymptotic normality of partitioning estimators}. Journal of Econometrics 174(2): 127-143.
 #'
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2020a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, 48(3): 1718-1741, 2020.
 #'
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. R Journal, forthcoming. arXiv:1906.00202.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2020b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. R Journal, 12(1): 172-187, 2020.
 #'
 #' Cohen, A., I. Daubechies, and P.Vial (1993): Wavelets on the Interval and Fast Wavelet Transforms. Applied and Computational Harmonic Analysis 1(1): 54-81.
 #'
@@ -121,7 +121,7 @@
 #'
 #'@export
 
-# Version 0.4 Aug2019
+# Version 0.5 Apr2025
 lsprobust = function(y, x, eval=NULL, neval=NULL, method="bs", m=NULL, m.bc=NULL, deriv=NULL, smooth=NULL,
                      bsmooth=NULL, ktype="uni", knot=NULL, nknot=NULL, same = TRUE, bknot=NULL, bnknot=NULL,
                      J=NULL, bc="bc3", proj=TRUE, kselect="imse-dpi", vce="hc2", level=95, uni.method=NULL,
@@ -225,11 +225,15 @@ lsprobust = function(y, x, eval=NULL, neval=NULL, method="bs", m=NULL, m.bc=NULL
     }
   }
 
-  if ((!is.null(m) | !is.null(q)) & (method == "wav" | method == "wavelet")) {
-     if (m > 3 | q > 3) {
+  if (method == "wav" | method == "wavelet") {
+     if (!is.null(m)) if (m > 3) {
        print("wavelet of order greater than 4 not allowed")
        exit <- 1
      }
+     if (!is.null(q)) if (q > 3) {
+      print("wavelet of order greater than 4 not allowed")
+      exit <- 1
+    }
   }
 
   if (d > 1 & !is.null(knot) & !is.list(knot)) {

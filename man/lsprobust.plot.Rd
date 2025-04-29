@@ -5,9 +5,9 @@
 \title{Graphic Presentation of Results for \pkg{lspartition} Package}
 \usage{
 lsprobust.plot(..., alpha = NULL, type = NULL, CS = "ci",
-  CStype = NULL, title = "", xlabel = "", ylabel = "",
-  lty = NULL, lwd = NULL, lcol = NULL, pty = NULL, pwd = NULL,
-  pcol = NULL, CSshade = NULL, CScol = NULL, legendTitle = NULL,
+  CStype = NULL, title = "", xlabel = "", ylabel = "", lty = NULL,
+  lwd = NULL, lcol = NULL, pty = NULL, pwd = NULL, pcol = NULL,
+  CSshade = NULL, CScol = NULL, legendTitle = NULL,
   legendGroups = NULL)
 }
 \arguments{
@@ -39,24 +39,24 @@ and uniform bands are represented by both lines and regions.}
 
 \item{lty}{Line type for point estimates, only effective if \code{type} is \code{"line"} or
 \code{"both"}. \code{1} for solid line, \code{2} for dashed line, \code{3}
-for dotted line. For other options, see the instructions for \code{\link{ggplot2}}
+for dotted line. For other options, see the instructions for \code{\link[ggplot2]{ggplot2}}
 or \code{\link{par}}. If more than one is provided, they will be applied to data
 series accordingly.}
 
 \item{lwd}{Line width for point estimates, only effective if \code{type} is \code{"line"}
 or \code{"both"}. Should be strictly positive. For other options, see the
-instructions for \code{\link{ggplot2}} or \code{\link{par}}. If more than one
+instructions for \code{\link[ggplot2]{ggplot2}} or \code{\link{par}}. If more than one
 is provided, they will be applied to data series accordingly.}
 
 \item{lcol}{Line color for point estimates, only effective if \code{type} is \code{"line"} or
 \code{"both"}. \code{1} for black, \code{2} for red, \code{3} for green,
-\code{4} for blue. For other options, see the instructions for \code{\link{ggplot2}}
+\code{4} for blue. For other options, see the instructions for \code{\link[ggplot2]{ggplot2}}
 or \code{\link{par}}. If more than one is provided, they will be applied to
 data series accordingly.}
 
 \item{pty}{Scatter plot type for point estimates, only effective if \code{type} is
 \code{"points"} or \code{"both"}. For options, see the instructions for
-\code{\link{ggplot2}} or \code{\link{par}}. If more than one is provided,
+\code{\link[ggplot2]{ggplot2}} or \code{\link{par}}. If more than one is provided,
 they will be applied to data series accordingly.}
 
 \item{pwd}{Scatter plot size for point estimates, only effective if \code{type} is
@@ -66,7 +66,7 @@ one is provided, they will be applied to data series accordingly.}
 \item{pcol}{Scatter plot color for point estimates, only effective if \code{type} is
 \code{"points"} or \code{"both"}. \code{1} for black, \code{2} for red,
 \code{3} for green, \code{4} for blue. For other options, see the instructions
-for \code{\link{ggplot2}} or \code{\link{par}}. If more than one is provided,
+for \code{\link[ggplot2]{ggplot2}} or \code{\link{par}}. If more than one is provided,
 they will be applied to data series accordingly.}
 
 \item{CSshade}{Numeric, opaqueness of the confidence region, should be between 0
@@ -75,7 +75,7 @@ they will be applied to data series accordingly.}
 
 \item{CScol}{Color for confidence region. \code{1} for black, \code{2} for red, \code{3}
 for green, \code{4} for blue. For other options, see the instructions for
-\code{\link{ggplot2}} or \code{\link{par}}. If more than one is provided,
+\code{\link[ggplot2]{ggplot2}} or \code{\link{par}}. If more than one is provided,
 they will be applied to data series accordingly.}
 
 \item{legendTitle}{String, title of legend.}
@@ -83,17 +83,17 @@ they will be applied to data series accordingly.}
 \item{legendGroups}{String vector, group names used in legend.}
 }
 \value{
-A standard \code{\link{ggplot2}} object is returned, hence can be used for further
+A standard \code{\link[ggplot2]{ggplot2}} object is returned, hence can be used for further
        customization.
 }
 \description{
 \code{lsprobust.plot} plots estimated regression functions and confidence regions using the \pkg{lspartition} package.
-            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2019a)} for complete details.
+            See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2020a)} for complete details.
 
             Companion command: \code{\link{lsprobust}} for partitioning-based least squares regression
             estimation and inference; \code{\link{lsprobust.plot}} for plotting results; \code{\link{lsplincom}} for multiple sample estimation and inference.
 
-            A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2019b)}.
+            A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2020b)}.
 
             For more details, and related Stata and R packages useful for empirical analysis,
             visit \url{https://sites.google.com/site/nppackages/}.
@@ -110,17 +110,17 @@ lsprobust.plot(est)
 
 }
 \references{
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2020a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, 48(3): 1718-1741, 2020.
 
-Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. R Journal, forthcoming. arXiv:1906.00202.
+Cattaneo, M. D., M. H. Farrell, and Y. Feng (2020b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. R Journal, 12(1): 172-187, 2020.
 }
 \seealso{
-\code{\link{lsprobust}}, \code{\link{lspkselect}}, \code{\link{lsplincom}}, \code{\link{ggplot2}}.
+\code{\link{lsprobust}}, \code{\link{lspkselect}}, \code{\link{lsplincom}}, \code{\link[ggplot2]{ggplot2}}.
 }
 \author{
 Matias D. Cattaneo, Princeton University, Princeton, NJ. \email{cattaneo@princeton.edu}.
 
-Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
+Max H. Farrell, University of California, Santa Barbara, CA. \email{maxhfarrell@ucsb.edu}.
 
-Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yingjief@princeton.edu}.
+Yingjie Feng (maintainer), Tsinghua University, Beijing, China. \email{fengyingjiepku@gmail.com}.
 }

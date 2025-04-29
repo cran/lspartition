@@ -1,11 +1,11 @@
 #'Tuning Parameter Selection Procedures for Partitioning-Based Regression Estimation and Inference
 #'
 #'@description \code{lspkselect} implements data-driven procedures to select the Integrated Mean Squared Error (IMSE) optimal number of partitioning knots for partitioning-based least squares regression estimators. Three series methods are supported: B-splines, compactly supported wavelets, and piecewise polynomials.
-#'             See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2019a)} for complete details.
+#'             See \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Cattaneo and Farrell (2013)} and \href{https://arxiv.org/abs/1804.04916}{Cattaneo, Farrell and Feng (2020a)} for complete details.
 #'
 #'             Companion commands: \code{\link{lsprobust}} for partitioning-based least squares regression estimation and inference; \code{\link{lsprobust.plot}} for plotting results; \code{\link{lsplincom}} for multiple sample estimation and inference.
 #'
-#'             A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2019b)}.
+#'             A detailed introduction to this command is given in \href{https://arxiv.org/abs/1906.00202}{Cattaneo, Farrell and Feng (2020b)}.
 #'
 #'             For more details, and related Stata and R packages useful for empirical analysis,
 #'             visit \url{https://sites.google.com/site/nppackages/}.
@@ -53,17 +53,17 @@
 #'@author
 #' Matias D. Cattaneo, Princeton University, Princeton, NJ. \email{cattaneo@princeton.edu}.
 #'
-#' Max H. Farrell, University of Chicago, Chicago, IL. \email{max.farrell@chicagobooth.edu}.
+#' Max H. Farrell, University of California, Santa Barbara, CA. \email{maxhfarrell@ucsb.edu}.
 #'
-#' Yingjie Feng (maintainer), Princeton University, Princeton, NJ. \email{yingjief@princeton.edu}.
+#' Yingjie Feng (maintainer), Tsinghua University, Beijing, China. \email{fengyingjiepku@gmail.com}.
 #'
 #'@references
 #'
 #' Cattaneo, M. D., and M. H. Farrell (2013): \href{https://sites.google.com/site/nppackages/lspartition/Cattaneo-Farrell_2013_JoE.pdf?attredirects=0}{Optimal convergence rates, Bahadur representation, and asymptotic normality of partitioning estimators}. Journal of Econometrics 174(2): 127-143.
 #'
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, forthcoming. arXiv:1804.04916.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2020a): \href{https://arxiv.org/abs/1804.04916}{Large Sample Properties of Partitioning-Based Series Estimators}. Annals of Statistics, 48(3): 1718-1741, 2020.
 #'
-#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2019b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. R Journal, forthcoming. arXiv:1906.00202.
+#' Cattaneo, M. D., M. H. Farrell, and Y. Feng (2020b): \href{https://arxiv.org/abs/1906.00202}{lspartition: Partitioning-Based Least Squares Regression}. R Journal, 12(1): 172-187, 2020.
 #'
 #' Cohen, A., I. Daubechies, and P.Vial (1993): Wavelets on the Interval and Fast Wavelet Transforms. Applied and Computational Harmonic Analysis 1(1): 54-81.
 #'
@@ -77,7 +77,7 @@
 #'
 #'@export
 #'
-# version 0.4 Aug2019
+# version 0.5 Apr2025
 lspkselect = function(y, x, m=NULL, m.bc=NULL, smooth=NULL, bsmooth=NULL, deriv=NULL, method="bs", ktype="uni",
                       kselect="imse-dpi", proj = TRUE, bc="bc3", vce="hc2", subset=NULL, rotnorm=TRUE) {
 
